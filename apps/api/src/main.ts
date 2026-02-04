@@ -9,7 +9,7 @@ async function bootstrap() {
   const { AppModule } = await import("./app.module.js");
   const { ensureDevDefaults } = await import("./seed/dev-defaults.js");
 
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule);
   const port = Number(process.env.API_PORT ?? 3001);
   await app.listen(port);
 

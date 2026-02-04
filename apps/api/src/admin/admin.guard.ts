@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common";
+import { getClientIp } from "../http/client-ip.js";
 
 @Injectable()
 export class AdminGuard implements CanActivate {
@@ -17,7 +18,7 @@ export class AdminGuard implements CanActivate {
     const allowedIpsRaw = (process.env.ADMIN_ALLOWED_IPS ?? "").trim();
     if (allowedIpsRaw.length > 0) {
       const allowed = allowedIpsRaw.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
-      const ip = (request.headers["x-forwarded-for"] ?? "").split(",")[0]?.trim() || request.socket?.remoteAddress || "";
+      const ip = getClientIp({ headers: request.headers, remoteAddress: request.socket?.remoteAddress });
       if (!allowed.includes(ip)) throw new ForbiddenException("Forbidden");
     }
 

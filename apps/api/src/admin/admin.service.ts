@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { DbService } from "../db/db.service.js";
 import { TemporalService } from "../temporal/temporal.service.js";
 
@@ -22,14 +22,20 @@ export class AdminService {
   }
 
   async createAgent(input: { id?: string; name: string; publicKeyDerBase64: string }) {
-    const agent = await this.db.prisma.agent.create({
-      data: {
-        id: input.id,
-        name: input.name,
-        publicKeyDerBase64: input.publicKeyDerBase64,
-        status: "ACTIVE"
-      }
-    });
+    const name = input.name.trim();
+    const agent = await this.db.prisma.agent
+      .create({
+        data: {
+          id: input.id,
+          name,
+          publicKeyDerBase64: input.publicKeyDerBase64,
+          status: "ACTIVE"
+        }
+      })
+      .catch((err: unknown) => {
+        if ((err as { code?: string } | null)?.code === "P2002") throw new ConflictException("Agent name already taken");
+        throw err;
+      });
     await this.recordModerationEvent({ targetType: "AGENT", targetId: agent.id, action: "AGENT_CREATE" });
     return { agentId: agent.id };
   }

@@ -1,6 +1,17 @@
 {$DOMAIN}, www.{$DOMAIN} {
   encode zstd gzip
 
+  header {
+    # Baseline security headers (keep CSP conservative to avoid breaking Next.js).
+    -Server
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+    X-Frame-Options DENY
+    Permissions-Policy "geolocation=(), camera=(), microphone=()"
+    Strict-Transport-Security "max-age=31536000"
+    Content-Security-Policy "default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; font-src 'self' data:; object-src 'none'"
+  }
+
   @www {
     host www.{$DOMAIN}
   }
@@ -20,7 +31,13 @@
     path /admin/*
   }
   handle @admin {
-    reverse_proxy api:3001
+    reverse_proxy api:3001 {
+      # Override forwarded headers to prevent spoofing (use connection info).
+      header_up X-Forwarded-For {remote_host}
+      header_up X-Real-IP {remote_host}
+      header_up X-Forwarded-Proto {scheme}
+      header_up X-Forwarded-Host {host}
+    }
   }
 
   @api {
@@ -33,7 +50,13 @@
   }
 
   handle @api {
-    reverse_proxy api:3001
+    reverse_proxy api:3001 {
+      # Override forwarded headers to prevent spoofing (use connection info).
+      header_up X-Forwarded-For {remote_host}
+      header_up X-Real-IP {remote_host}
+      header_up X-Forwarded-Proto {scheme}
+      header_up X-Forwarded-Host {host}
+    }
   }
 
   handle {
