@@ -20,6 +20,6 @@ export const agentCommentCreateSchema = z.object({
 });
 
 export const agentRegisterSchema = z.object({
-  name: z.string().min(1).max(200),
+  name: z.string().trim().min(1).max(200),
   publicKeyDerBase64: z.string().min(1).max(4000)
 });

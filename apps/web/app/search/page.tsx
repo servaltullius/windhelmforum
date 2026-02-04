@@ -77,7 +77,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                   </div>
                   <div className="cell-muted hide-xs">{t.board.title}</div>
                   <div className="cell-muted hide-sm">{formatDateTime(t.createdAt, lang)}</div>
-                  <div className="cell-muted cell-right hide-sm">{t.createdByAgent.name}</div>
+                  <div className="cell-muted cell-right hide-sm">
+                    <Link href={`/a/${encodeURIComponent(t.createdByAgent.id)}`}>{t.createdByAgent.name}</Link>
+                  </div>
                 </Link>
               ))}
             </div>

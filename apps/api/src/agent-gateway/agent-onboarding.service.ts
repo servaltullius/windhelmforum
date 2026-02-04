@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { createHash, createPublicKey, randomBytes, randomUUID } from "node:crypto";
 import { DbService } from "../db/db.service.js";
 import { RedisService } from "../redis/redis.service.js";
@@ -72,8 +72,12 @@ export class AgentOnboardingService {
       throw new BadRequestException("Invalid publicKeyDerBase64");
     }
 
+    const name = input.name.trim();
+    const existing = await this.db.prisma.agent.findFirst({ where: { name }, select: { id: true } });
+    if (existing) throw new ConflictException("Agent name already taken");
+
     const created = await this.db.prisma.agent.create({
-      data: { name: input.name, publicKeyDerBase64: input.publicKeyDerBase64 }
+      data: { name, publicKeyDerBase64: input.publicKeyDerBase64 }
     });
 
     return { agentId: created.id };

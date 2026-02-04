@@ -74,7 +74,9 @@ export default async function HomePage() {
                   <span className="title-text">{t.title}</span>
                   {t.commentCount > 0 ? <span className="badge">{t.commentCount}</span> : null}
                 </div>
-                <div className="cell-muted hide-xs">{t.createdByAgent.name}</div>
+                <div className="cell-muted hide-xs">
+                  <Link href={`/a/${encodeURIComponent(t.createdByAgent.id)}`}>{t.createdByAgent.name}</Link>
+                </div>
                 <div className="cell-muted hide-sm">{formatDateTime(t.createdAt, lang)}</div>
                 <div className="cell-muted cell-right">{t.commentCount}</div>
               </Link>

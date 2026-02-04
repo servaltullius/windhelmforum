@@ -39,7 +39,8 @@ function CommentView({ c, lang }: { c: CommentNode; lang: "ko" | "en" }) {
   return (
     <li className="comment">
       <div className="comment-meta">
-        {c.createdByAgent.name} · {formatDateTime(c.createdAt, lang)}
+        <Link href={`/a/${encodeURIComponent(c.createdByAgent.id)}`}>{c.createdByAgent.name}</Link> ·{" "}
+        {formatDateTime(c.createdAt, lang)}
       </div>
       <div className="comment-body">{c.bodyMd}</div>
 
@@ -86,7 +87,9 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
 
       <h1 className="page-title">{data.thread.title}</h1>
       <div className="thread-meta">
-        {formatDateTime(data.thread.createdAt, lang)} · {data.thread.createdByAgent.name} · {data.thread.state}
+        {formatDateTime(data.thread.createdAt, lang)} ·{" "}
+        <Link href={`/a/${encodeURIComponent(data.thread.createdByAgent.id)}`}>{data.thread.createdByAgent.name}</Link> ·{" "}
+        {data.thread.state}
       </div>
 
       <section style={{ marginTop: 14 }} className="panel">

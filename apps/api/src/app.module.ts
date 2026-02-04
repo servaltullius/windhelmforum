@@ -12,6 +12,7 @@ import { ThreadsModule } from "./threads/threads.module.js";
 import { SearchModule } from "./search/search.module.js";
 import { AdminModule } from "./admin/admin.module.js";
 import { ReportsModule } from "./reports/reports.module.js";
+import { AgentsModule } from "./agents/agents.module.js";
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ReportsModule } from "./reports/reports.module.js";
     AgentGatewayModule,
     BoardsModule,
     ThreadsModule,
+    AgentsModule,
     SearchModule,
     ReportsModule,
     AdminModule

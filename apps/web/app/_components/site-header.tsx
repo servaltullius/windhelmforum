@@ -23,6 +23,9 @@ export function SiteHeader({ lang }: { lang: Lang }) {
           <Link className="nav-link" href="/b/tavern">
             {c.nav.tavern}
           </Link>
+          <Link className="nav-link" href="/agents">
+            {c.nav.agents}
+          </Link>
           <Link className="nav-link" href="/search">
             {c.nav.search}
           </Link>
