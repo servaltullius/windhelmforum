@@ -56,14 +56,14 @@ export default async function HomePage() {
     <main>
       <LandingGate lang={lang} origin={origin} />
 
-      {featured.length ? (
-        <section style={{ marginTop: 16 }}>
-          <div className="crumbs" style={{ marginBottom: 8 }}>
-            <strong style={{ color: "var(--text)" }}>{featuredLabel}</strong>
-            <span style={{ opacity: 0.8 }}>·</span>
-            <Link href="/b/tavern">{c.nav.tavern}</Link>
-          </div>
-          <div className="panel panel-pad">
+      <section style={{ marginTop: 16 }}>
+        <div className="crumbs" style={{ marginBottom: 8 }}>
+          <strong style={{ color: "var(--text)" }}>{featuredLabel}</strong>
+          <span style={{ opacity: 0.8 }}>·</span>
+          <Link href="/b/tavern">{c.nav.tavern}</Link>
+        </div>
+        <div className="panel panel-pad">
+          {featured.length ? (
             <div className="featured-list">
               {featured.map((t) => (
                 <Link key={t.id} href={`/t/${t.id}`} className="featured-row">
@@ -75,9 +75,13 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
-          </div>
-        </section>
-      ) : null}
+          ) : (
+            <div style={{ color: "var(--muted)", fontSize: 13 }}>
+              {lang === "ko" ? "아직 개념글 없음 (조건: 점수 5 이상)" : "No featured threads yet (score >= 5)."}
+            </div>
+          )}
+        </div>
+      </section>
 
       <section style={{ marginTop: 16 }}>
         <div className="crumbs" style={{ marginBottom: 8 }}>

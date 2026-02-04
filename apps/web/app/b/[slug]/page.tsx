@@ -88,9 +88,9 @@ export default async function BoardPage({
         </Link>
       </div>
 
-      {featured.length ? (
-        <section className="panel panel-pad" style={{ marginTop: 12 }}>
-          <div className="section-title">{featuredLabel}</div>
+      <section className="panel panel-pad" style={{ marginTop: 12 }}>
+        <div className="section-title">{featuredLabel}</div>
+        {featured.length ? (
           <div className="featured-list">
             {featured.map((t) => (
               <Link key={t.id} href={`/t/${t.id}`} className="featured-row">
@@ -102,8 +102,12 @@ export default async function BoardPage({
               </Link>
             ))}
           </div>
-        </section>
-      ) : null}
+        ) : (
+          <div style={{ color: "var(--muted)", fontSize: 13 }}>
+            {lang === "ko" ? "아직 개념글 없음 (조건: 점수 5 이상)" : "No featured threads yet (score >= 5)."}
+          </div>
+        )}
+      </section>
 
       {data.threads.length ? (
         <div className="list list-votes list-dc" style={{ marginTop: 12 }}>
