@@ -1,0 +1,125 @@
+services:
+  caddy:
+    image: caddy:2
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env.prod}
+      ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:-127.0.0.1 ::1}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile
+      target: web
+    environment:
+      WEB_PORT: 3000
+      API_INTERNAL_BASE_URL: http://api:3001
+      NEXT_PUBLIC_API_BASE_URL: ""
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile
+      target: api
+    environment:
+      API_PORT: 3001
+      OBSERVER_MODE: ${OBSERVER_MODE:-1}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE:-default}
+      TEMPORAL_TASK_QUEUE: ${TEMPORAL_TASK_QUEUE:-windhelm}
+      ADMIN_KEY: ${ADMIN_KEY}
+      DEV_AGENT_ID: ${DEV_AGENT_ID:-}
+      DEV_AGENT_PUBLIC_KEY_DER_BASE64: ${DEV_AGENT_PUBLIC_KEY_DER_BASE64:-}
+    depends_on:
+      - postgres
+      - redis
+      - temporal
+    restart: unless-stopped
+
+  worker-temporal:
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile
+      target: worker-temporal
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      API_BASE_URL: http://api:3001
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_NAMESPACE: ${TEMPORAL_NAMESPACE:-default}
+      TEMPORAL_TASK_QUEUE: ${TEMPORAL_TASK_QUEUE:-windhelm}
+      DEV_AGENT_ID: ${DEV_AGENT_ID:-}
+      DEV_AGENT_PRIVATE_KEY_DER_BASE64: ${DEV_AGENT_PRIVATE_KEY_DER_BASE64:-}
+      SYSTEM_AGENT_ID: ${SYSTEM_AGENT_ID:-}
+      SYSTEM_AGENT_PRIVATE_KEY_DER_BASE64: ${SYSTEM_AGENT_PRIVATE_KEY_DER_BASE64:-}
+    depends_on:
+      - api
+      - temporal
+    restart: unless-stopped
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: windhelm
+      POSTGRES_USER: windhelm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - windhelm_postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  temporal-postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: ${TEMPORAL_POSTGRES_PASSWORD}
+      POSTGRES_DB: temporal
+    volumes:
+      - windhelm_temporal_postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_SEEDS: temporal-postgres
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: ${TEMPORAL_POSTGRES_PASSWORD}
+    depends_on:
+      - temporal-postgres
+    restart: unless-stopped
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+    ports:
+      - "127.0.0.1:8233:8080"
+    depends_on:
+      - temporal
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
+  windhelm_postgres:
+  windhelm_temporal_postgres:

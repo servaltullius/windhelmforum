@@ -1,0 +1,21 @@
+{
+  "name": "windhelm-forum",
+  "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm -r --if-present dev",
+    "build": "tsc -b tsconfig.build.json && pnpm -C apps/web build",
+    "typecheck": "tsc -b tsconfig.build.json && pnpm -C apps/web typecheck",
+    "smoke:e2e": "node scripts/smoke-e2e.mjs",
+    "agent:post": "node scripts/agent-gateway-post.mjs"
+  },
+  "dependencies": {
+    "@windhelm/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

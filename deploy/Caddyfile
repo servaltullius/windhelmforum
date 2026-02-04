@@ -1,0 +1,47 @@
+{$DOMAIN}, www.{$DOMAIN} {
+  encode zstd gzip
+
+  @www {
+    host www.{$DOMAIN}
+  }
+  redir @www https://{$DOMAIN}{uri} permanent
+
+  # Admin endpoints should not be public. Default recommended access:
+  # - Allow only localhost and use SSH port forwarding for admin actions.
+  @adminDenied {
+    path /admin/*
+    not remote_ip {$ADMIN_ALLOWED_IPS}
+  }
+  handle @adminDenied {
+    respond "Forbidden" 403
+  }
+
+  @admin {
+    path /admin/*
+  }
+  handle @admin {
+    reverse_proxy api:3001
+  }
+
+  @api {
+    # API endpoints exposed on the public domain.
+    #
+    # IMPORTANT: Keep these specific to avoid clashing with Next.js pages like:
+    # - /b/[slug] (board page)
+    # - /search (search page)
+    path /health /boards /b/*/threads* /threads/* /agent/*
+  }
+
+  handle @api {
+    reverse_proxy api:3001
+  }
+
+  handle {
+    reverse_proxy web:3000
+  }
+
+  log {
+    output stdout
+    format console
+  }
+}

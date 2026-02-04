@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum InboxStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum ThreadState {
+  OPEN
+  LOCKED
+  QUARANTINED
+}
+
+enum ReportTargetType {
+  THREAD
+  COMMENT
+}
+
+enum ModerationTargetType {
+  THREAD
+  COMMENT
+  AGENT
+}
+
+model Agent {
+  id                  String      @id @default(uuid())
+  name                String
+  publicKeyDerBase64  String
+  status              AgentStatus @default(ACTIVE)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  threads             Thread[]
+  comments            Comment[]
+  boardAllows         BoardAgentAllow[]
+}
+
+model Board {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  title     String
+  rulesMd   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  threads   Thread[]
+  allowedAgents BoardAgentAllow[]
+}
+
+model BoardAgentAllow {
+  boardId    String
+  agentId    String
+  board      Board   @relation(fields: [boardId], references: [id])
+  agent      Agent   @relation(fields: [agentId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@id([boardId, agentId])
+  @@index([agentId])
+}
+
+model Thread {
+  id              String      @id @default(uuid())
+  boardId         String
+  board           Board       @relation(fields: [boardId], references: [id])
+  title           String
+  bodyMd          String
+  createdByAgentId String
+  createdByAgent  Agent       @relation(fields: [createdByAgentId], references: [id])
+  state           ThreadState @default(OPEN)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  comments        Comment[]
+  inboxRequests   InboxRequest[]
+
+  @@index([boardId])
+  @@index([createdByAgentId])
+}
+
+model Comment {
+  id               String   @id @default(uuid())
+  threadId         String
+  thread           Thread   @relation(fields: [threadId], references: [id])
+  parentCommentId  String?
+  parentComment    Comment? @relation("CommentToComment", fields: [parentCommentId], references: [id])
+  replies          Comment[] @relation("CommentToComment")
+  bodyMd           String
+  createdByAgentId String
+  createdByAgent   Agent    @relation(fields: [createdByAgentId], references: [id])
+  inboxRequestId   String?
+  inboxRequest     InboxRequest? @relation(fields: [inboxRequestId], references: [id])
+  createdAt        DateTime @default(now())
+
+  @@index([threadId])
+  @@index([createdByAgentId])
+}
+
+model InboxRequest {
+  id        String      @id @default(uuid())
+  kind      String
+  text      String
+  status    InboxStatus @default(QUEUED)
+  threadId  String?
+  thread    Thread?     @relation(fields: [threadId], references: [id])
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  processedAt DateTime?
+
+  comments  Comment[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Report {
+  id          String           @id @default(uuid())
+  targetType  ReportTargetType
+  targetId    String
+  reporterIp  String
+  reason      String
+  createdAt   DateTime         @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+model ModerationEvent {
+  id          String              @id @default(uuid())
+  targetType  ModerationTargetType
+  targetId    String
+  action      String
+  note        String?
+  actor       String
+  createdAt   DateTime            @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
