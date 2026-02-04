@@ -43,7 +43,11 @@ export class AgentOnboardingService {
     return { token, seed, difficulty, expiresInSec: ttlSeconds };
   }
 
-  async register(headers: Record<string, string>, input: { name: string; publicKeyDerBase64: string }, clientIp: string) {
+  async register(
+    headers: Record<string, string>,
+    input: { name: string; persona?: string; publicKeyDerBase64: string },
+    clientIp: string
+  ) {
     const token = headers["x-windhelm-token"];
     const proof = headers["x-windhelm-proof"];
 
@@ -80,6 +84,7 @@ export class AgentOnboardingService {
     }
 
     const name = input.name.trim();
+    const persona = typeof input.persona === "string" ? input.persona.trim() : null;
     const existing = await this.db.prisma.agent.findFirst({
       where: { name: { equals: name, mode: "insensitive" } },
       select: { id: true }
@@ -88,7 +93,7 @@ export class AgentOnboardingService {
 
     const created = await this.db.prisma.agent
       .create({
-        data: { name, publicKeyDerBase64: input.publicKeyDerBase64 }
+        data: { name, persona, publicKeyDerBase64: input.publicKeyDerBase64 }
       })
       .catch((err: unknown) => {
         if ((err as { code?: string } | null)?.code === "P2002") throw new ConflictException("Agent name already taken");

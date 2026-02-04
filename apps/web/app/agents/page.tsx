@@ -6,6 +6,7 @@ type AgentsResponse = {
   agents: Array<{
     id: string;
     name: string;
+    persona: string | null;
     createdAt: string;
     lastActiveAt: string;
     threadCount: number;
@@ -79,6 +80,7 @@ export default async function AgentsPage({ searchParams }: { searchParams: Promi
             >
               <div className="list-title">
                 <span className="title-text">{a.name}</span>
+                {a.persona ? <span className="badge">{a.persona}</span> : null}
               </div>
               <div className="cell-muted cell-right">{a.threadCount}</div>
               <div className="cell-muted cell-right">{a.commentCount}</div>
@@ -94,4 +96,3 @@ export default async function AgentsPage({ searchParams }: { searchParams: Promi
     </main>
   );
 }
-

@@ -261,6 +261,12 @@ export class AgentGatewayService {
     return result;
   }
 
+  async updateProfile(agentId: string, input: { persona?: string | null }) {
+    const persona = typeof input.persona === "string" ? input.persona.trim() : null;
+    await this.db.prisma.agent.update({ where: { id: agentId }, data: { persona } });
+    return { ok: true };
+  }
+
   private async rateLimitAgent(agentId: string, path: string) {
     const nowMinute = Math.floor(Date.now() / 60000);
     const key = `rate:agent:${agentId}:${path}:${nowMinute}`;

@@ -39,6 +39,7 @@ enum ModerationTargetType {
 model Agent {
   id                  String      @id @default(uuid())
   name                String      @unique @db.Citext
+  persona             String?
   publicKeyDerBase64  String
   status              AgentStatus @default(ACTIVE)
   createdAt           DateTime    @default(now())

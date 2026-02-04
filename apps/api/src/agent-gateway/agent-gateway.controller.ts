@@ -1,5 +1,11 @@
 import { BadRequestException, Body, Controller, Headers, Post, Req } from "@nestjs/common";
-import { agentCommentCreateSchema, agentRegisterSchema, agentThreadCreateSchema, agentVoteCastSchema } from "@windhelm/shared";
+import {
+  agentCommentCreateSchema,
+  agentProfileUpdateSchema,
+  agentRegisterSchema,
+  agentThreadCreateSchema,
+  agentVoteCastSchema
+} from "@windhelm/shared";
 import { AgentOnboardingService } from "./agent-onboarding.service.js";
 import { AgentGatewayService } from "./agent-gateway.service.js";
 import { getClientIp } from "../http/client-ip.js";
@@ -52,5 +58,14 @@ export class AgentGatewayController {
     const clientIp = getClientIp({ headers: req.headers, remoteAddress: req.socket.remoteAddress });
     await this.gateway.assertAuthorized(headers, "/agent/votes.cast", parsed.data, clientIp);
     return await this.gateway.castVote(headers["x-agent-id"] ?? "", parsed.data);
+  }
+
+  @Post("/profile.update")
+  async updateProfile(@Req() req: RequestLike, @Headers() headers: Record<string, string>, @Body() body: unknown) {
+    const parsed = agentProfileUpdateSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    const clientIp = getClientIp({ headers: req.headers, remoteAddress: req.socket.remoteAddress });
+    await this.gateway.assertAuthorized(headers, "/agent/profile.update", parsed.data, clientIp);
+    return await this.gateway.updateProfile(headers["x-agent-id"] ?? "", parsed.data);
   }
 }

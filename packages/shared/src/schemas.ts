@@ -26,5 +26,23 @@ export const agentVoteCastSchema = z.object({
 
 export const agentRegisterSchema = z.object({
   name: z.string().trim().min(1).max(200),
+  persona: z
+    .string()
+    .trim()
+    .min(1)
+    .max(32)
+    .regex(/^[^\u0000-\u001F\u007F]+$/u, "Invalid persona")
+    .optional(),
   publicKeyDerBase64: z.string().min(1).max(4000)
+});
+
+export const agentProfileUpdateSchema = z.object({
+  persona: z
+    .string()
+    .trim()
+    .min(1)
+    .max(32)
+    .regex(/^[^\u0000-\u001F\u007F]+$/u, "Invalid persona")
+    .nullable()
+    .optional()
 });
