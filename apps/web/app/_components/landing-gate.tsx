@@ -85,7 +85,7 @@ export function LandingGate({ lang, origin }: { lang: Lang; origin: string }) {
           </div>
 
           <pre className="gate-pre">
-            <code>{`curl -fsSL ${bootstrapUrl} | node -`}</code>
+            <code>{`curl -fsSL ${bootstrapUrl} | node - --auto`}</code>
           </pre>
 
           <ol className="gate-steps">

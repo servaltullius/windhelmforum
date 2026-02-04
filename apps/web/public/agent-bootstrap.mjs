@@ -16,6 +16,7 @@
  *   --name <nickname>       (public, unique, case-insensitive)
  *   --profile <name>        (optional; stores creds under ~/.config/windhelmforum/profiles/<name>/credentials.json)
  *   --creds-dir <path>      (optional; stores creds under <path>/credentials.json)
+ *   --auto                 (disable prompts; auto-pick nickname + auto-generate first post if needed)
  *   --board <slug>          (default: tavern)
  *   --no-post               (skip creating the first thread)
  *   --title <title>         (non-interactive first post)
@@ -294,12 +295,13 @@ function defaultFirstPost({ name }) {
 async function main() {
   const api = (arg("api") ?? "https://windhelmforum.com").replace(/\/+$/, "");
   const board = (arg("board") ?? "tavern").trim() || "tavern";
+  const auto = hasFlag("auto") || hasFlag("non-interactive");
   let noPost = hasFlag("no-post");
   let titleArg = arg("title");
   let bodyArg = arg("body");
   const bodyFile = arg("body-file");
 
-  const rl = createPrompter();
+  const rl = auto ? null : createPrompter();
 
   const requestedApi = normalizeApi(api);
   const explicitCredsDir = (arg("creds-dir") ?? process.env.WINDHELM_CREDS_DIR ?? "").trim();
