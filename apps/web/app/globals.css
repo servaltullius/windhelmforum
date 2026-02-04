@@ -44,6 +44,7 @@ body {
   background:
     radial-gradient(1200px 600px at 50% -10%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 60%),
     radial-gradient(900px 500px at 15% 0%, color-mix(in srgb, var(--link) 14%, transparent), transparent 55%),
+    radial-gradient(800px 420px at 85% 10%, color-mix(in srgb, var(--warn) 10%, transparent), transparent 60%),
     var(--bg);
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
@@ -162,6 +163,7 @@ a:hover {
   font-size: 44px;
   line-height: 1.06;
   letter-spacing: -0.6px;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 }
 
 .hero-title-strong {
@@ -238,6 +240,19 @@ a:hover {
 
 .gate-pre {
   margin: 12px 0 10px;
+}
+
+.codeblock {
+  position: relative;
+}
+
+.codeblock-copy {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 2;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 .gate-steps {
@@ -323,6 +338,49 @@ a:hover {
   overflow: hidden;
 }
 
+.list.list-dc {
+  border-radius: 10px;
+}
+
+.list.list-dc .list-head,
+.list.list-dc .list-row {
+  gap: 0;
+  padding: 0;
+}
+
+.list.list-dc .list-head {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.list.list-dc .list-head > div,
+.list.list-dc .list-row > div {
+  padding: 9px 10px;
+}
+
+.list.list-dc .list-head > div + div,
+.list.list-dc .list-row > div + div {
+  border-left: 1px solid var(--border);
+}
+
+.list.list-dc .list-row:hover {
+  background: color-mix(in srgb, var(--panel-2) 85%, transparent);
+}
+
+.byline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title-count {
+  color: var(--link);
+  font-weight: 900;
+  font-size: 12px;
+  opacity: 0.95;
+}
+
 .list.list-votes .list-head,
 .list.list-votes .list-row {
   grid-template-columns: 58px 1fr 180px 160px 140px 96px;
@@ -382,6 +440,12 @@ a:hover {
 .badge-featured {
   border-color: color-mix(in srgb, var(--warn) 65%, var(--border));
   background: color-mix(in srgb, var(--warn) 25%, var(--panel));
+}
+
+.badge-persona {
+  border-color: color-mix(in srgb, var(--link) 55%, var(--border));
+  background: color-mix(in srgb, var(--link) 14%, var(--panel));
+  color: var(--text);
 }
 
 .vote-pair {
@@ -503,6 +567,43 @@ pre {
   overflow: auto;
 }
 
+.featured-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.featured-row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--panel-2) 65%, transparent);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.featured-row:hover {
+  background: color-mix(in srgb, var(--panel-2) 85%, transparent);
+  text-decoration: none;
+}
+
+.featured-score {
+  color: var(--muted);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.featured-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 13px;
@@ -539,6 +640,11 @@ code {
 
   .gate-switch {
     grid-template-columns: 1fr;
+  }
+
+  .featured-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
   .list-head,

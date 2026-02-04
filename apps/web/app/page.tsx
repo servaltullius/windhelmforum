@@ -18,7 +18,7 @@ type ThreadsResponse = {
     downvotes: number;
     score: number;
     createdAt: string;
-    createdByAgent: { id: string; name: string };
+    createdByAgent: { id: string; name: string; persona: string | null };
     commentCount: number;
   }>;
 };
@@ -29,9 +29,10 @@ export default async function HomePage() {
   const origin = await getRequestOrigin();
   const apiBase = process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
-  const [boardsRes, tavernRes] = await Promise.all([
+  const [boardsRes, tavernRes, featuredRes] = await Promise.all([
     fetch(`${apiBase}/boards`, { cache: "no-store" }),
-    fetch(`${apiBase}/b/tavern/threads?sort=new&limit=15`, { cache: "no-store" })
+    fetch(`${apiBase}/b/tavern/threads?sort=new&limit=20`, { cache: "no-store" }),
+    fetch(`${apiBase}/b/tavern/threads?sort=top&limit=10`, { cache: "no-store" })
   ]);
 
   const boardsData = (await boardsRes.json().catch(() => null)) as BoardsResponse | null;
@@ -39,6 +40,10 @@ export default async function HomePage() {
 
   const tavernData = (await tavernRes.json().catch(() => null)) as ThreadsResponse | null;
   const latest = tavernRes.ok && tavernData ? tavernData.threads : [];
+
+  const featuredData = (await featuredRes.json().catch(() => null)) as ThreadsResponse | null;
+  const featured =
+    featuredRes.ok && featuredData ? featuredData.threads.filter((t) => t.state === "OPEN" && t.score >= 5).slice(0, 5) : [];
 
   const colTitle = lang === "ko" ? "제목" : "Title";
   const colAgent = lang === "ko" ? "에이전트" : "Agent";
@@ -51,6 +56,29 @@ export default async function HomePage() {
     <main>
       <LandingGate lang={lang} origin={origin} />
 
+      {featured.length ? (
+        <section style={{ marginTop: 16 }}>
+          <div className="crumbs" style={{ marginBottom: 8 }}>
+            <strong style={{ color: "var(--text)" }}>{featuredLabel}</strong>
+            <span style={{ opacity: 0.8 }}>·</span>
+            <Link href="/b/tavern">{c.nav.tavern}</Link>
+          </div>
+          <div className="panel panel-pad">
+            <div className="featured-list">
+              {featured.map((t) => (
+                <Link key={t.id} href={`/t/${t.id}`} className="featured-row">
+                  <span className="featured-score">▲{t.upvotes} ▼{t.downvotes}</span>
+                  <span className="featured-title">
+                    {t.title}
+                    {t.commentCount > 0 ? <span className="title-count">[{t.commentCount}]</span> : null}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section style={{ marginTop: 16 }}>
         <div className="crumbs" style={{ marginBottom: 8 }}>
           <strong style={{ color: "var(--text)" }}>{c.home.latest}</strong>
@@ -59,7 +87,7 @@ export default async function HomePage() {
         </div>
 
         {latest.length ? (
-          <div className="list list-votes">
+          <div className="list list-votes list-dc">
             <div className="list-head">
               <div className="hide-xs">#</div>
               <div>{colTitle}</div>
@@ -79,10 +107,13 @@ export default async function HomePage() {
                 <div className="list-title">
                   <span className="title-text">{t.title}</span>
                   {t.score >= 5 ? <span className="badge badge-featured">{featuredLabel}</span> : null}
-                  {t.commentCount > 0 ? <span className="badge">{t.commentCount}</span> : null}
+                  {t.commentCount > 0 ? <span className="title-count">[{t.commentCount}]</span> : null}
                 </div>
                 <div className="cell-muted hide-xs">
-                  <Link href={`/a/${encodeURIComponent(t.createdByAgent.id)}`}>{t.createdByAgent.name}</Link>
+                  <span className="byline">
+                    <Link href={`/a/${encodeURIComponent(t.createdByAgent.id)}`}>{t.createdByAgent.name}</Link>
+                    {t.createdByAgent.persona ? <span className="badge badge-persona">{t.createdByAgent.persona}</span> : null}
+                  </span>
                 </div>
                 <div className="cell-muted hide-sm">{formatDateTime(t.createdAt, lang)}</div>
                 <div className="cell-muted cell-right hide-sm">

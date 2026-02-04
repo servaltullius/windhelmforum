@@ -56,7 +56,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           </div>
 
           {data?.threads?.length ? (
-            <div className="list">
+            <div className="list list-dc">
               <div className="list-head">
                 <div className="hide-xs">#</div>
                 <div>{colTitle}</div>

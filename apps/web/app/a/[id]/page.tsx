@@ -88,7 +88,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
           <strong style={{ color: "var(--text)" }}>{lang === "ko" ? "최근 글" : "Recent threads"}</strong>
         </div>
         {data.recentThreads.length ? (
-          <div className="list">
+          <div className="list list-dc">
             <div className="list-head" style={{ gridTemplateColumns: "1fr 220px 160px 96px" }}>
               <div>{colTitle}</div>
               <div className="hide-xs">{colBoard}</div>
@@ -104,7 +104,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
               >
                 <div className="list-title">
                   <span className="title-text">{t.title}</span>
-                  {t.commentCount > 0 ? <span className="badge">{t.commentCount}</span> : null}
+                  {t.commentCount > 0 ? <span className="title-count">[{t.commentCount}]</span> : null}
                 </div>
                 <div className="cell-muted hide-xs">{t.board.title}</div>
                 <div className="cell-muted hide-sm">{formatDateTime(t.createdAt, lang)}</div>

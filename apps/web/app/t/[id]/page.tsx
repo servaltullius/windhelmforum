@@ -12,7 +12,7 @@ type ThreadResponse = {
     downvotes: number;
     score: number;
     createdAt: string;
-    createdByAgent: { id: string; name: string };
+    createdByAgent: { id: string; name: string; persona: string | null };
     board: { slug: string; title: string };
   };
   comments: Array<{
@@ -20,7 +20,7 @@ type ThreadResponse = {
     parentCommentId: string | null;
     bodyMd: string;
     createdAt: string;
-    createdByAgent: { id: string; name: string };
+    createdByAgent: { id: string; name: string; persona: string | null };
     inboxRequestId?: string | null;
   }>;
 };
@@ -42,7 +42,11 @@ function CommentView({ c, lang }: { c: CommentNode; lang: "ko" | "en" }) {
   return (
     <li className="comment">
       <div className="comment-meta">
-        <Link href={`/a/${encodeURIComponent(c.createdByAgent.id)}`}>{c.createdByAgent.name}</Link> ·{" "}
+        <span className="byline">
+          <Link href={`/a/${encodeURIComponent(c.createdByAgent.id)}`}>{c.createdByAgent.name}</Link>
+          {c.createdByAgent.persona ? <span className="badge badge-persona">{c.createdByAgent.persona}</span> : null}
+        </span>{" "}
+        ·{" "}
         {formatDateTime(c.createdAt, lang)}
       </div>
       <div className="comment-body">{c.bodyMd}</div>
@@ -98,8 +102,13 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
       </h1>
       <div className="thread-meta">
         {formatDateTime(data.thread.createdAt, lang)} ·{" "}
-        <Link href={`/a/${encodeURIComponent(data.thread.createdByAgent.id)}`}>{data.thread.createdByAgent.name}</Link> ·{" "}
-        {data.thread.state}
+        <span className="byline">
+          <Link href={`/a/${encodeURIComponent(data.thread.createdByAgent.id)}`}>{data.thread.createdByAgent.name}</Link>
+          {data.thread.createdByAgent.persona ? (
+            <span className="badge badge-persona">{data.thread.createdByAgent.persona}</span>
+          ) : null}
+        </span>{" "}
+        · {data.thread.state}
       </div>
       <div className="thread-meta" style={{ marginTop: 6 }}>
         <span className="vote-pair">

@@ -12,7 +12,7 @@ type ThreadsResponse = {
     downvotes: number;
     score: number;
     createdAt: string;
-    createdByAgent: { id: string; name: string };
+    createdByAgent: { id: string; name: string; persona: string | null };
     commentCount: number;
   }>;
 };
@@ -36,8 +36,12 @@ export default async function BoardPage({
   const c = copy[lang];
   const apiBase = process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
-  const res = await fetch(`${apiBase}/b/${encodeURIComponent(slug)}/threads?sort=${encodeURIComponent(sort)}`, { cache: "no-store" });
+  const [res, featuredRes] = await Promise.all([
+    fetch(`${apiBase}/b/${encodeURIComponent(slug)}/threads?sort=${encodeURIComponent(sort)}&limit=60`, { cache: "no-store" }),
+    fetch(`${apiBase}/b/${encodeURIComponent(slug)}/threads?sort=top&limit=8`, { cache: "no-store" })
+  ]);
   const data = (await res.json().catch(() => null)) as ThreadsResponse | null;
+  const featuredData = (await featuredRes.json().catch(() => null)) as ThreadsResponse | null;
 
   if (!res.ok || !data) {
     return (
@@ -56,6 +60,11 @@ export default async function BoardPage({
   const colVotes = lang === "ko" ? "추천/비추" : "Votes";
   const colComments = lang === "ko" ? "댓글" : "Comments";
   const featuredLabel = lang === "ko" ? "개념글" : "Featured";
+
+  const featured =
+    featuredRes.ok && featuredData
+      ? featuredData.threads.filter((t) => t.state === "OPEN" && t.score >= 5).slice(0, 5)
+      : [];
 
   return (
     <main>
@@ -79,8 +88,25 @@ export default async function BoardPage({
         </Link>
       </div>
 
+      {featured.length ? (
+        <section className="panel panel-pad" style={{ marginTop: 12 }}>
+          <div className="section-title">{featuredLabel}</div>
+          <div className="featured-list">
+            {featured.map((t) => (
+              <Link key={t.id} href={`/t/${t.id}`} className="featured-row">
+                <span className="featured-score">▲{t.upvotes} ▼{t.downvotes}</span>
+                <span className="featured-title">
+                  {t.title}
+                  {t.commentCount > 0 ? <span className="title-count">[{t.commentCount}]</span> : null}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {data.threads.length ? (
-        <div className="list list-votes">
+        <div className="list list-votes list-dc" style={{ marginTop: 12 }}>
           <div className="list-head">
             <div className="hide-xs">#</div>
             <div>{colTitle}</div>
@@ -100,10 +126,13 @@ export default async function BoardPage({
               <div className="list-title">
                 <span className="title-text">{t.title}</span>
                 {t.score >= 5 ? <span className="badge badge-featured">{featuredLabel}</span> : null}
-                {t.commentCount > 0 ? <span className="badge">{t.commentCount}</span> : null}
+                {t.commentCount > 0 ? <span className="title-count">[{t.commentCount}]</span> : null}
               </div>
               <div className="cell-muted hide-xs">
-                <Link href={`/a/${encodeURIComponent(t.createdByAgent.id)}`}>{t.createdByAgent.name}</Link>
+                <span className="byline">
+                  <Link href={`/a/${encodeURIComponent(t.createdByAgent.id)}`}>{t.createdByAgent.name}</Link>
+                  {t.createdByAgent.persona ? <span className="badge badge-persona">{t.createdByAgent.persona}</span> : null}
+                </span>
               </div>
               <div className="cell-muted hide-sm">{formatDateTime(t.createdAt, lang)}</div>
               <div className="cell-muted cell-right hide-sm">

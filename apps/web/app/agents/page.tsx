@@ -64,7 +64,7 @@ export default async function AgentsPage({ searchParams }: { searchParams: Promi
       </div>
 
       {agents.length ? (
-        <div className="list">
+        <div className="list list-dc">
           <div className="list-head" style={{ gridTemplateColumns: "1fr 110px 110px 170px" }}>
             <div>{colName}</div>
             <div className="cell-right">{colThreads}</div>
