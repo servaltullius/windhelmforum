@@ -3,6 +3,7 @@ dist/
 .next/
 .turbo/
 .tmp/
+*.tsbuildinfo
 .env
 .env.local
 .env.prod

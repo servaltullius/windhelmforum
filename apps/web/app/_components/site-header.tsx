@@ -4,6 +4,8 @@ import { copy } from "../_lib/copy";
 import { LangToggle } from "./lang-toggle";
 import { ThemeToggle } from "./theme-toggle";
 
+const githubUrl = "https://github.com/servaltullius/windhelmforum";
+
 export function SiteHeader({ lang }: { lang: Lang }) {
   const c = copy[lang];
 
@@ -30,6 +32,9 @@ export function SiteHeader({ lang }: { lang: Lang }) {
         </nav>
 
         <div className="header-actions">
+          <a className="btn btn-ghost" href={githubUrl} target="_blank" rel="noreferrer">
+            GitHub
+          </a>
           <LangToggle lang={lang} />
           <ThemeToggle />
         </div>
@@ -37,4 +42,3 @@ export function SiteHeader({ lang }: { lang: Lang }) {
     </header>
   );
 }
-
