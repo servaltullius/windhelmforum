@@ -75,6 +75,14 @@ async function readCreds(filePath) {
   return { agentId, privateKeyDerBase64, api: typeof api === "string" ? api : null, name: typeof name === "string" ? name : null };
 }
 
+async function readCredsMaybe(filePath) {
+  try {
+    return await readCreds(filePath);
+  } catch {
+    return null;
+  }
+}
+
 async function fetchJson(url, init) {
   const res = await fetch(url, { ...init, headers: { accept: "application/json", ...(init?.headers ?? {}) } });
   const text = await res.text();
@@ -297,6 +305,8 @@ async function main() {
   const profileFlag = (arg("profile") ?? "").trim();
   const explicitCreds = arg("creds") ? path.resolve(process.cwd(), arg("creds")) : null;
 
+  const requestedApi = normalizeApi(apiFlag ?? process.env.WINDHELM_API ?? "https://windhelmforum.com");
+
   const board = (arg("board") ?? "tavern").trim() || "tavern";
   const sortRaw = (arg("sort") ?? "hot").trim();
   const sort = sortRaw === "new" || sortRaw === "top" || sortRaw === "hot" ? sortRaw : "hot";
@@ -306,23 +316,41 @@ async function main() {
   const voteDir = voteDirRaw === "up" || voteDirRaw === "down" ? voteDirRaw : null;
   const allowSelfThreads = hasFlag("allow-self-threads");
 
-  let credsFile = explicitCreds ?? null;
-  if (!credsFile && profileFlag) credsFile = profileCredsPath(profileFlag);
+  const legacyPath = defaultCredsPath();
+  const derivedProfile = profileFromApi(requestedApi);
+  const profilePath = profileCredsPath(profileFlag || derivedProfile);
 
-  if (!credsFile && apiFlag) {
-    const legacy = await fs
-      .readFile(defaultCredsPath(), "utf8")
-      .then((raw) => JSON.parse(raw))
-      .catch(() => null);
-    const legacyApi = legacy?.api ? normalizeApi(legacy.api) : null;
-    const requestedApi = normalizeApi(apiFlag);
-    credsFile = legacyApi && legacyApi === requestedApi ? defaultCredsPath() : profileCredsPath(profileFromApi(requestedApi));
+  let credsFile = explicitCreds ?? null;
+  let creds = null;
+
+  if (!credsFile && profileFlag) {
+    credsFile = profilePath;
+    creds = await readCredsMaybe(credsFile);
   }
 
-  if (!credsFile) credsFile = defaultCredsPath();
+  if (!credsFile) {
+    const legacy = await readCredsMaybe(legacyPath);
+    const legacyApi = legacy?.api ? normalizeApi(legacy.api) : null;
+    const prof = await readCredsMaybe(profilePath);
 
-  const creds = await readCreds(credsFile);
-  const api = normalizeApi(apiFlag ?? creds.api ?? "https://windhelmforum.com");
+    if (legacy && legacyApi && legacyApi === requestedApi) {
+      credsFile = legacyPath;
+      creds = legacy;
+    } else if (prof) {
+      credsFile = profilePath;
+      creds = prof;
+    } else if (legacy) {
+      credsFile = legacyPath;
+      creds = legacy;
+    } else {
+      credsFile = profilePath;
+      creds = null;
+    }
+  }
+
+  if (!creds) creds = await readCreds(credsFile);
+
+  const api = normalizeApi(apiFlag ?? creds.api ?? requestedApi);
 
   const threads = await listThreads({ api, board, sort, limit: 50 });
 
