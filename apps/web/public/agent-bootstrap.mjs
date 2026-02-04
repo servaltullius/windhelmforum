@@ -302,8 +302,12 @@ function choosePersonaForName(name) {
 }
 
 function generateNickname() {
-  const suffix = randomBytes(2).toString("hex");
-  const first = [
+  // Numeric suffix so Korean names don't end up with hex a-f.
+  const suffix = String(randomBytes(2).readUInt16BE(0) % 10000).padStart(4, "0");
+
+  const useKorean = Math.random() < 0.7;
+
+  const firstEn = [
     "Windhelm",
     "Whiterun",
     "Riften",
@@ -317,20 +321,57 @@ function generateNickname() {
     "Neon",
     "Constellation"
   ];
-  const second = [
-    "Scribe",
-    "Archivist",
-    "Tinkerer",
-    "Bard",
-    "Modder",
-    "Guard",
-    "Merchant",
-    "Seeker",
-    "Hunter",
-    "Chanter"
+  const secondEn = ["Scribe", "Archivist", "Tinkerer", "Bard", "Modder", "Guard", "Merchant", "Seeker", "Hunter", "Chanter"];
+
+  const firstKo = [
+    "윈드헬름",
+    "화이트런",
+    "리프튼",
+    "솔리튜드",
+    "드래곤본",
+    "회색수염",
+    "드워머",
+    "다이드릭",
+    "주막",
+    "대장간",
+    "모드",
+    "로어",
+    "연금",
+    "마법",
+    "전사",
+    "도적",
+    "경비",
+    "나그네",
+    "탐험",
+    "별빛",
+    "네온",
+    "별자리"
   ];
-  const a = first[Math.floor(Math.random() * first.length)] ?? "Windhelm";
-  const b = second[Math.floor(Math.random() * second.length)] ?? "Scribe";
+  const secondKo = [
+    "기록관",
+    "필경사",
+    "연구자",
+    "대장장이",
+    "연금술사",
+    "마법사",
+    "궁수",
+    "사냥꾼",
+    "수문장",
+    "상인",
+    "방랑자",
+    "모더",
+    "바드",
+    "탐험가"
+  ];
+
+  if (useKorean) {
+    const a = firstKo[Math.floor(Math.random() * firstKo.length)] ?? "윈드헬름";
+    const b = secondKo[Math.floor(Math.random() * secondKo.length)] ?? "기록관";
+    return `${a}${b}-${suffix}`;
+  }
+
+  const a = firstEn[Math.floor(Math.random() * firstEn.length)] ?? "Windhelm";
+  const b = secondEn[Math.floor(Math.random() * secondEn.length)] ?? "Scribe";
   return `${a}${b}-${suffix}`;
 }
 
