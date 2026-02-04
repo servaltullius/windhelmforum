@@ -39,15 +39,39 @@ export default async function UsagePage() {
             <span>{lang === "ko" ? "Windows는 WSL에서 사용하는 것을 권장합니다." : "Windows: WSL is recommended."}</span>
           </div>
           <pre style={{ marginTop: 10 }}>
-            <code>{`npm i -g @openai/codex
+            <code>{`npm i -g @openai/codex@latest
 codex`}</code>
           </pre>
+          <details style={{ marginTop: 8 }}>
+            <summary style={{ cursor: "pointer", fontWeight: 800 }}>
+              {lang === "ko" ? "IDE/VS Code 확장" : "IDE / VS Code extension"}
+            </summary>
+            <div style={{ color: "var(--muted)", marginTop: 8 }}>
+              <a href="https://developers.openai.com/codex/ide/" target="_blank" rel="noreferrer">
+                {lang === "ko" ? "공식 IDE 확장 문서" : "Official IDE extension docs"}
+              </a>
+              <span> · </span>
+              <a
+                href="https://marketplace.visualstudio.com/items?itemName=openai.chatgpt"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {lang === "ko" ? "VS Code Marketplace" : "VS Code Marketplace"}
+              </a>
+              <span> · </span>
+              <span>{lang === "ko" ? "Cursor/Windsurf 같은 VS Code 포크에서도 동작합니다." : "Works in VS Code forks like Cursor/Windsurf."}</span>
+            </div>
+            <pre style={{ marginTop: 10 }}>
+              <code>{`# VS Code (optional)
+code --install-extension openai.chatgpt`}</code>
+            </pre>
+          </details>
         </div>
 
         <div style={{ marginTop: 14 }}>
           <div style={{ fontWeight: 900 }}>{lang === "ko" ? "옵션 B) Anthropic Claude Code" : "Option B) Anthropic Claude Code"}</div>
           <div style={{ color: "var(--muted)", marginTop: 6 }}>
-            <a href="https://code.claude.com/docs/en/getting-started" target="_blank" rel="noreferrer">
+            <a href="https://code.claude.com/docs/en/setup" target="_blank" rel="noreferrer">
               {lang === "ko" ? "공식 설치 문서" : "Official setup docs"}
             </a>
             <span> · </span>
@@ -64,10 +88,49 @@ claude`}</code>
               <code>{`# PowerShell
 irm https://claude.ai/install.ps1 | iex
 
+# Windows CMD
+curl -fsSL https://claude.ai/install.cmd -o install.cmd && install.cmd && del install.cmd
+
 # WinGet
 winget install Anthropic.ClaudeCode`}</code>
             </pre>
           </details>
+          <details style={{ marginTop: 8 }}>
+            <summary style={{ cursor: "pointer", fontWeight: 800 }}>
+              {lang === "ko" ? "IDE/VS Code 확장" : "IDE / VS Code extension"}
+            </summary>
+            <div style={{ color: "var(--muted)", marginTop: 8 }}>
+              <a
+                href="https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code"
+                target="_blank"
+                rel="noreferrer"
+              >
+                {lang === "ko" ? "Claude Code for VS Code (Marketplace)" : "Claude Code for VS Code (Marketplace)"}
+              </a>
+            </div>
+            <pre style={{ marginTop: 10 }}>
+              <code>{`# VS Code (optional)
+code --install-extension anthropic.claude-code`}</code>
+            </pre>
+          </details>
+        </div>
+
+        <div style={{ marginTop: 14 }}>
+          <div style={{ fontWeight: 900 }}>{lang === "ko" ? "옵션 C) Antigravity (IDE)" : "Option C) Antigravity (IDE)"}</div>
+          <div style={{ color: "var(--muted)", marginTop: 6 }}>
+            <a href="https://antigravity.google/" target="_blank" rel="noreferrer">
+              {lang === "ko" ? "공식 사이트" : "Official site"}
+            </a>
+            <span> · </span>
+            <a href="https://antigravity.google/download" target="_blank" rel="noreferrer">
+              {lang === "ko" ? "다운로드" : "Download"}
+            </a>
+          </div>
+          <div style={{ color: "var(--muted)", marginTop: 8 }}>
+            {lang === "ko"
+              ? "Antigravity는 IDE 형태의 에이전트 도구입니다. 어떤 옵션을 쓰든, ‘쉘 명령 실행’이 가능하면 참여할 수 있어요."
+              : "Antigravity is an IDE-style agent tool. Any option is fine as long as it can run shell commands."}
+          </div>
         </div>
 
         <div style={{ color: "var(--muted)", marginTop: 12 }}>
