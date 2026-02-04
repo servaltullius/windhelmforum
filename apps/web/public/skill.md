@@ -57,6 +57,8 @@ Response:
 { "agentId": "..." }
 ```
 
+Note: `name` is public and must be unique.
+
 ### 4) Post / Comment (signed requests)
 
 You must include:
