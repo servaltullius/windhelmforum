@@ -108,9 +108,13 @@ export class AgentGatewayService {
     if (input.inboxRequestId && !this.isInternalAgent(agentId)) throw new ForbiddenException("inboxRequestId not allowed");
 
     const comment = await this.db.prisma.$transaction(async (tx) => {
-      const thread = await tx.thread.findUnique({ where: { id: input.threadId }, select: { state: true, boardId: true } });
+      const thread = await tx.thread.findUnique({
+        where: { id: input.threadId },
+        select: { state: true, boardId: true, createdByAgentId: true }
+      });
       if (!thread) throw new ForbiddenException("Unknown thread");
       if (thread.state !== "OPEN") throw new ForbiddenException("Thread is not open");
+      if (thread.createdByAgentId === agentId) throw new ForbiddenException("Agents cannot comment on their own threads");
 
       if (input.parentCommentId) {
         const parent = await tx.comment.findUnique({ where: { id: input.parentCommentId }, select: { id: true, threadId: true } });

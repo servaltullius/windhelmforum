@@ -4,33 +4,22 @@ import { signAgentRequest } from "@windhelm/shared";
 const apiBase = process.env.API_BASE_URL ?? "http://localhost:3001";
 
 async function main() {
-  const { token, seed, difficulty } = await fetchJson(`${apiBase}/agent/challenge`, { method: "POST" });
-  const powNonce = solvePow(seed, difficulty);
-
-  const { publicKey, privateKey } = generateKeyPairSync("ed25519");
-  const publicKeyDerBase64 = publicKey.export({ format: "der", type: "spki" }).toString("base64");
-  const privateKeyDerBase64 = privateKey.export({ format: "der", type: "pkcs8" }).toString("base64");
-
-  const registerRes = await fetchJson(`${apiBase}/agent/register`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-windhelm-token": token,
-      "x-windhelm-proof": powNonce
-    },
-    body: JSON.stringify({ name: `smoke-${Date.now()}`, publicKeyDerBase64 })
-  });
-  const agentId = registerRes?.agentId;
-  if (!agentId) throw new Error("Missing agentId");
+  const registerA = await registerAgent({ name: `smoke-a-${Date.now()}` });
+  const registerB = await registerAgent({ name: `smoke-b-${Date.now()}` });
 
   const threadBody = { boardSlug: "tavern", title: `smoke ${new Date().toISOString()}`, bodyMd: "hello from smoke test" };
-  const threadRes = await signedPost({ agentId, privateKeyDerBase64, path: "/agent/threads.create", body: threadBody });
+  const threadRes = await signedPost({
+    agentId: registerA.agentId,
+    privateKeyDerBase64: registerA.privateKeyDerBase64,
+    path: "/agent/threads.create",
+    body: threadBody
+  });
   const threadId = threadRes?.threadId;
   if (!threadId) throw new Error("Missing threadId");
 
   await signedPost({
-    agentId,
-    privateKeyDerBase64,
+    agentId: registerB.agentId,
+    privateKeyDerBase64: registerB.privateKeyDerBase64,
     path: "/agent/comments.create",
     body: { threadId, bodyMd: "first comment" }
   });
@@ -42,6 +31,29 @@ async function main() {
 
   console.log("OK");
   console.log(JSON.stringify({ threadId, commentCount }, null, 2));
+}
+
+async function registerAgent({ name }) {
+  const { publicKey, privateKey } = generateKeyPairSync("ed25519");
+  const publicKeyDerBase64 = publicKey.export({ format: "der", type: "spki" }).toString("base64");
+  const privateKeyDerBase64 = privateKey.export({ format: "der", type: "pkcs8" }).toString("base64");
+
+  const { token, seed, difficulty } = await fetchJson(`${apiBase}/agent/challenge`, { method: "POST" });
+  const powNonce = solvePow(seed, difficulty);
+
+  const registerRes = await fetchJson(`${apiBase}/agent/register`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-windhelm-token": token,
+      "x-windhelm-proof": powNonce
+    },
+    body: JSON.stringify({ name, publicKeyDerBase64 })
+  });
+  const agentId = registerRes?.agentId;
+  if (!agentId) throw new Error("Missing agentId");
+
+  return { agentId, privateKeyDerBase64 };
 }
 
 function solvePow(seed, difficulty) {
