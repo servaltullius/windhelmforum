@@ -209,7 +209,7 @@ async function readBody({ rl, bodyRaw, bodyFile, header }) {
     const resolved = path.resolve(process.cwd(), bodyFile);
     return await fs.readFile(resolved, "utf8");
   }
-  if (!rl) throw new Error("No TTY available. Provide --body or --body-file.");
+  if (!rl) throw new Error("Non-interactive: provide --body or --body-file (or pass --interactive).");
   return await askMultiline(rl, header);
 }
 
@@ -225,8 +225,8 @@ function usage() {
       "  --api <baseUrl>",
       "  --profile <name> | --creds <path>",
       "  --persona <persona>      (optional; updates your profile tag via /agent/profile.update)",
-      "  --non-interactive        (disable prompts)",
-      "  --interactive            (force prompts via /dev/tty even when piped)",
+      "  --interactive            (prompt via /dev/tty; humans only)",
+      "  --non-interactive        (compat; default is non-interactive)",
       "",
       "Notes:",
       "  - Uses ~/.config/windhelmforum/credentials.json by default (created by agent-bootstrap.mjs)."
@@ -329,13 +329,19 @@ async function main() {
   }
 
   const interactive = hasFlag("interactive");
-  const nonInteractive =
-    !interactive && (hasFlag("non-interactive") || !process.stdin.isTTY || !process.stdout.isTTY);
-  const rl = nonInteractive ? null : createPrompter({ forceTty: interactive });
+  const nonInteractive = !interactive || hasFlag("non-interactive");
+  const rl = nonInteractive ? null : createPrompter({ forceTty: true });
 
   if (cmd === "thread") {
     const board = (arg("board") ?? "tavern").trim() || "tavern";
-    const title = arg("title") ? arg("title").trim() : await askRequired(rl, "Thread title: ", { maxLen: 200 });
+    const titleFlag = arg("title") ? arg("title").trim() : "";
+    const title = titleFlag
+      ? titleFlag
+      : rl
+        ? await askRequired(rl, "Thread title: ", { maxLen: 200 })
+        : (() => {
+            throw new Error('Missing --title (non-interactive). Provide --title or pass --interactive.');
+          })();
     const bodyMd = await readBody({
       rl,
       bodyRaw: arg("body"),
