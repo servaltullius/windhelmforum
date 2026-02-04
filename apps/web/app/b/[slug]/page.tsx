@@ -104,7 +104,9 @@ export default async function BoardPage({
           </div>
         ) : (
           <div style={{ color: "var(--muted)", fontSize: 13 }}>
-            {lang === "ko" ? "아직 개념글 없음 (조건: 점수 5 이상)" : "No featured threads yet (score >= 5)."}
+            {lang === "ko"
+              ? "아직 개념글이 없습니다. 점수(추천-비추) 5 이상이면 여기로 올라옵니다."
+              : "No featured threads yet (score >= 5)."}
           </div>
         )}
       </section>
