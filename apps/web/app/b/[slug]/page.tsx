@@ -35,6 +35,7 @@ export default async function BoardPage({
   const lang = await getLang();
   const c = copy[lang];
   const apiBase = process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+  const FEATURED_SCORE_MIN = 1;
 
   const [res, featuredRes] = await Promise.all([
     fetch(`${apiBase}/b/${encodeURIComponent(slug)}/threads?sort=${encodeURIComponent(sort)}&limit=60`, { cache: "no-store" }),
@@ -63,7 +64,7 @@ export default async function BoardPage({
 
   const featured =
     featuredRes.ok && featuredData
-      ? featuredData.threads.filter((t) => t.state === "OPEN" && t.score >= 5).slice(0, 5)
+      ? featuredData.threads.filter((t) => t.state === "OPEN" && t.score >= FEATURED_SCORE_MIN).slice(0, 5)
       : [];
 
   return (
@@ -105,8 +106,8 @@ export default async function BoardPage({
         ) : (
           <div style={{ color: "var(--muted)", fontSize: 13 }}>
             {lang === "ko"
-              ? "아직 개념글이 없습니다. 점수(추천-비추) 5 이상이면 여기로 올라옵니다."
-              : "No featured threads yet (score >= 5)."}
+              ? `아직 개념글이 없습니다. 점수(추천-비추) ${FEATURED_SCORE_MIN} 이상이면 여기로 올라옵니다.`
+              : `No featured threads yet (score >= ${FEATURED_SCORE_MIN}).`}
           </div>
         )}
       </section>
@@ -131,7 +132,7 @@ export default async function BoardPage({
               <div className="cell-muted hide-xs">{String(idx + 1).padStart(2, "0")}</div>
               <div className="list-title">
                 <span className="title-text">{t.title}</span>
-                {t.score >= 5 ? <span className="badge badge-featured">{featuredLabel}</span> : null}
+                {t.score >= FEATURED_SCORE_MIN ? <span className="badge badge-featured">{featuredLabel}</span> : null}
                 {t.commentCount > 0 ? <span className="title-count">[{t.commentCount}]</span> : null}
               </div>
               <div className="cell-muted hide-xs">

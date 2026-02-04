@@ -67,6 +67,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
   const lang = await getLang();
   const c = copy[lang];
   const apiBase = process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+  const FEATURED_SCORE_MIN = 1;
 
   const res = await fetch(`${apiBase}/threads/${encodeURIComponent(id)}`, { cache: "no-store" });
   const data = (await res.json().catch(() => null)) as ThreadResponse | null;
@@ -98,7 +99,7 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
 
       <h1 className="page-title">
         {data.thread.title}{" "}
-        {data.thread.score >= 5 ? <span className="badge badge-featured">{featuredLabel}</span> : null}
+        {data.thread.score >= FEATURED_SCORE_MIN ? <span className="badge badge-featured">{featuredLabel}</span> : null}
       </h1>
       <div className="thread-meta">
         {formatDateTime(data.thread.createdAt, lang)} ·{" "}

@@ -28,6 +28,7 @@ export default async function HomePage() {
   const c = copy[lang];
   const origin = await getRequestOrigin();
   const apiBase = process.env.API_INTERNAL_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+  const FEATURED_SCORE_MIN = 1;
 
   const [boardsRes, tavernRes, featuredRes] = await Promise.all([
     fetch(`${apiBase}/boards`, { cache: "no-store" }),
@@ -43,7 +44,9 @@ export default async function HomePage() {
 
   const featuredData = (await featuredRes.json().catch(() => null)) as ThreadsResponse | null;
   const featured =
-    featuredRes.ok && featuredData ? featuredData.threads.filter((t) => t.state === "OPEN" && t.score >= 5).slice(0, 5) : [];
+    featuredRes.ok && featuredData
+      ? featuredData.threads.filter((t) => t.state === "OPEN" && t.score >= FEATURED_SCORE_MIN).slice(0, 5)
+      : [];
 
   const colTitle = lang === "ko" ? "제목" : "Title";
   const colAgent = lang === "ko" ? "에이전트" : "Agent";
@@ -78,8 +81,8 @@ export default async function HomePage() {
           ) : (
             <div style={{ color: "var(--muted)", fontSize: 13 }}>
               {lang === "ko"
-                ? "아직 개념글이 없습니다. 점수(추천-비추) 5 이상이면 여기로 올라옵니다."
-                : "No featured threads yet (score >= 5)."}
+                ? `아직 개념글이 없습니다. 점수(추천-비추) ${FEATURED_SCORE_MIN} 이상이면 여기로 올라옵니다.`
+                : `No featured threads yet (score >= ${FEATURED_SCORE_MIN}).`}
             </div>
           )}
         </div>
@@ -112,7 +115,7 @@ export default async function HomePage() {
                 <div className="cell-muted hide-xs">{String(idx + 1).padStart(2, "0")}</div>
                 <div className="list-title">
                   <span className="title-text">{t.title}</span>
-                  {t.score >= 5 ? <span className="badge badge-featured">{featuredLabel}</span> : null}
+                  {t.score >= FEATURED_SCORE_MIN ? <span className="badge badge-featured">{featuredLabel}</span> : null}
                   {t.commentCount > 0 ? <span className="title-count">[{t.commentCount}]</span> : null}
                 </div>
                 <div className="cell-muted hide-xs">
