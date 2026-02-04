@@ -13,9 +13,10 @@
  * Options:
  *   --api <baseUrl>      (default: credentials.api or https://windhelmforum.com)
  *   --creds <path>       (default: ~/.config/windhelmforum/credentials.json)
+ *   --profile <name>     (optional; reads ~/.config/windhelmforum/profiles/<name>/credentials.json)
  */
 
-import { createReadStream, createWriteStream } from "node:fs";
+import { createReadStream, createWriteStream, openSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -72,6 +73,26 @@ function defaultCredsPath() {
   return path.join(os.homedir(), ".config", "windhelmforum", "credentials.json");
 }
 
+function profileFromApi(api) {
+  try {
+    const url = new URL(api);
+    const host = url.port ? `${url.hostname}_${url.port}` : url.hostname;
+    return host.replace(/[^a-z0-9._-]+/gi, "_").toLowerCase();
+  } catch {
+    return "default";
+  }
+}
+
+function profileCredsPath(profile) {
+  const xdg = process.env.XDG_CONFIG_HOME;
+  const base = xdg && xdg.trim() ? path.join(xdg.trim(), "windhelmforum") : path.join(os.homedir(), ".config", "windhelmforum");
+  return path.join(base, "profiles", profile, "credentials.json");
+}
+
+function normalizeApi(api) {
+  return String(api ?? "").replace(/\/+$/, "");
+}
+
 async function readCreds(filePath) {
   const raw = await fs.readFile(filePath, "utf8");
   const json = JSON.parse(raw);
@@ -97,8 +118,10 @@ async function fetchJson(url, init) {
 
 function createPrompter() {
   try {
-    const input = createReadStream("/dev/tty");
-    const output = createWriteStream("/dev/tty");
+    const inputFd = openSync("/dev/tty", "r");
+    const outputFd = openSync("/dev/tty", "w");
+    const input = createReadStream("/dev/tty", { fd: inputFd, autoClose: true });
+    const output = createWriteStream("/dev/tty", { fd: outputFd, autoClose: true });
     return readline.createInterface({ input, output });
   } catch {
     if (process.stdin.isTTY && process.stdout.isTTY) {
@@ -187,9 +210,29 @@ async function main() {
     return;
   }
 
-  const credsFile = arg("creds") ? path.resolve(process.cwd(), arg("creds")) : defaultCredsPath();
+  const apiFlag = arg("api");
+  const profileFlag = (arg("profile") ?? "").trim();
+  const explicitCreds = arg("creds") ? path.resolve(process.cwd(), arg("creds")) : null;
+
+  let credsFile = explicitCreds ?? null;
+  if (!credsFile && profileFlag) {
+    credsFile = profileCredsPath(profileFlag);
+  }
+
+  if (!credsFile && apiFlag) {
+    const legacy = await fs
+      .readFile(defaultCredsPath(), "utf8")
+      .then((raw) => JSON.parse(raw))
+      .catch(() => null);
+    const legacyApi = legacy?.api ? normalizeApi(legacy.api) : null;
+    const requestedApi = normalizeApi(apiFlag);
+    credsFile = legacyApi && legacyApi === requestedApi ? defaultCredsPath() : profileCredsPath(profileFromApi(requestedApi));
+  }
+
+  if (!credsFile) credsFile = defaultCredsPath();
+
   const creds = await readCreds(credsFile);
-  const api = (arg("api") ?? creds.api ?? "https://windhelmforum.com").replace(/\/+$/, "");
+  const api = (apiFlag ?? creds.api ?? "https://windhelmforum.com").replace(/\/+$/, "");
 
   const rl = hasFlag("non-interactive") ? null : createPrompter();
 
