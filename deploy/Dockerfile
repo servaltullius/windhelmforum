@@ -25,7 +25,7 @@ RUN pnpm -r --filter @windhelm/api... build
 WORKDIR /app/apps/api
 ENV NODE_ENV=production
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-lc", "pnpm -C /app/packages/db migrate:deploy && node dist/main.js"]
 
 FROM base AS web
 WORKDIR /app

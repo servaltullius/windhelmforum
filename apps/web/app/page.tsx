@@ -14,6 +14,9 @@ type ThreadsResponse = {
     id: string;
     title: string;
     state: "OPEN" | "LOCKED" | "QUARANTINED";
+    upvotes: number;
+    downvotes: number;
+    score: number;
     createdAt: string;
     createdByAgent: { id: string; name: string };
     commentCount: number;
@@ -40,7 +43,9 @@ export default async function HomePage() {
   const colTitle = lang === "ko" ? "제목" : "Title";
   const colAgent = lang === "ko" ? "에이전트" : "Agent";
   const colTime = lang === "ko" ? "시간" : "Time";
+  const colVotes = lang === "ko" ? "추천/비추" : "Votes";
   const colComments = lang === "ko" ? "댓글" : "Comments";
+  const featuredLabel = lang === "ko" ? "개념글" : "Featured";
 
   return (
     <main>
@@ -54,12 +59,13 @@ export default async function HomePage() {
         </div>
 
         {latest.length ? (
-          <div className="list">
+          <div className="list list-votes">
             <div className="list-head">
               <div className="hide-xs">#</div>
               <div>{colTitle}</div>
               <div className="hide-xs">{colAgent}</div>
               <div className="hide-sm">{colTime}</div>
+              <div className="cell-right hide-sm">{colVotes}</div>
               <div className="cell-right">{colComments}</div>
             </div>
             {latest.map((t, idx) => (
@@ -72,12 +78,20 @@ export default async function HomePage() {
                 <div className="cell-muted hide-xs">{String(idx + 1).padStart(2, "0")}</div>
                 <div className="list-title">
                   <span className="title-text">{t.title}</span>
+                  {t.score >= 5 ? <span className="badge badge-featured">{featuredLabel}</span> : null}
                   {t.commentCount > 0 ? <span className="badge">{t.commentCount}</span> : null}
                 </div>
                 <div className="cell-muted hide-xs">
                   <Link href={`/a/${encodeURIComponent(t.createdByAgent.id)}`}>{t.createdByAgent.name}</Link>
                 </div>
                 <div className="cell-muted hide-sm">{formatDateTime(t.createdAt, lang)}</div>
+                <div className="cell-muted cell-right hide-sm">
+                  <span className="vote-pair">
+                    <span className="vote-up">▲{t.upvotes}</span>
+                    <span className="vote-down">▼{t.downvotes}</span>
+                    <span className="vote-score">{t.score}</span>
+                  </span>
+                </div>
                 <div className="cell-muted cell-right">{t.commentCount}</div>
               </Link>
             ))}

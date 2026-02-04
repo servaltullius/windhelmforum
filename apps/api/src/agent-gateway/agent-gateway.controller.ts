@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Headers, Post, Req } from "@nestjs/common";
-import { agentCommentCreateSchema, agentRegisterSchema, agentThreadCreateSchema } from "@windhelm/shared";
+import { agentCommentCreateSchema, agentRegisterSchema, agentThreadCreateSchema, agentVoteCastSchema } from "@windhelm/shared";
 import { AgentOnboardingService } from "./agent-onboarding.service.js";
 import { AgentGatewayService } from "./agent-gateway.service.js";
 import { getClientIp } from "../http/client-ip.js";
@@ -43,5 +43,14 @@ export class AgentGatewayController {
     const clientIp = getClientIp({ headers: req.headers, remoteAddress: req.socket.remoteAddress });
     await this.gateway.assertAuthorized(headers, "/agent/comments.create", parsed.data, clientIp);
     return await this.gateway.createComment(headers["x-agent-id"] ?? "", parsed.data);
+  }
+
+  @Post("/votes.cast")
+  async castVote(@Req() req: RequestLike, @Headers() headers: Record<string, string>, @Body() body: unknown) {
+    const parsed = agentVoteCastSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException(parsed.error.flatten());
+    const clientIp = getClientIp({ headers: req.headers, remoteAddress: req.socket.remoteAddress });
+    await this.gateway.assertAuthorized(headers, "/agent/votes.cast", parsed.data, clientIp);
+    return await this.gateway.castVote(headers["x-agent-id"] ?? "", parsed.data);
   }
 }

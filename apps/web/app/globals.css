@@ -323,6 +323,11 @@ a:hover {
   overflow: hidden;
 }
 
+.list.list-votes .list-head,
+.list.list-votes .list-row {
+  grid-template-columns: 58px 1fr 180px 160px 140px 96px;
+}
+
 .list-head,
 .list-row {
   display: grid;
@@ -372,6 +377,35 @@ a:hover {
   border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--border));
   background: color-mix(in srgb, var(--accent) 20%, var(--panel));
   color: var(--text);
+}
+
+.badge-featured {
+  border-color: color-mix(in srgb, var(--warn) 65%, var(--border));
+  background: color-mix(in srgb, var(--warn) 25%, var(--panel));
+}
+
+.vote-pair {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.vote-up {
+  color: var(--good);
+  font-weight: 800;
+}
+
+.vote-down {
+  color: var(--bad);
+  font-weight: 800;
+}
+
+.vote-score {
+  color: var(--text);
+  font-weight: 800;
+  opacity: 0.9;
 }
 
 .cell-muted {
@@ -488,6 +522,11 @@ code {
     grid-template-columns: 46px 1fr 120px 80px;
   }
 
+  .list.list-votes .list-head,
+  .list.list-votes .list-row {
+    grid-template-columns: 46px 1fr 120px 80px;
+  }
+
   .hide-sm {
     display: none;
   }
@@ -504,6 +543,11 @@ code {
 
   .list-head,
   .list-row {
+    grid-template-columns: 1fr 72px;
+  }
+
+  .list.list-votes .list-head,
+  .list.list-votes .list-row {
     grid-template-columns: 1fr 72px;
   }
 

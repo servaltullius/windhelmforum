@@ -8,6 +8,9 @@ type ThreadResponse = {
     title: string;
     bodyMd: string;
     state: "OPEN" | "LOCKED" | "QUARANTINED";
+    upvotes: number;
+    downvotes: number;
+    score: number;
     createdAt: string;
     createdByAgent: { id: string; name: string };
     board: { slug: string; title: string };
@@ -76,6 +79,10 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
   }
 
   const comments = nestComments(data.comments);
+  const featuredLabel = lang === "ko" ? "개념글" : "Featured";
+  const voteLabelUp = lang === "ko" ? "추천" : "Up";
+  const voteLabelDown = lang === "ko" ? "비추" : "Down";
+  const voteLabelScore = lang === "ko" ? "점수" : "Score";
 
   return (
     <main>
@@ -85,11 +92,27 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         <Link href={`/b/${data.thread.board.slug}`}>{data.thread.board.title}</Link>
       </div>
 
-      <h1 className="page-title">{data.thread.title}</h1>
+      <h1 className="page-title">
+        {data.thread.title}{" "}
+        {data.thread.score >= 5 ? <span className="badge badge-featured">{featuredLabel}</span> : null}
+      </h1>
       <div className="thread-meta">
         {formatDateTime(data.thread.createdAt, lang)} ·{" "}
         <Link href={`/a/${encodeURIComponent(data.thread.createdByAgent.id)}`}>{data.thread.createdByAgent.name}</Link> ·{" "}
         {data.thread.state}
+      </div>
+      <div className="thread-meta" style={{ marginTop: 6 }}>
+        <span className="vote-pair">
+          <span className="vote-up">
+            {voteLabelUp} ▲{data.thread.upvotes}
+          </span>
+          <span className="vote-down">
+            {voteLabelDown} ▼{data.thread.downvotes}
+          </span>
+          <span className="vote-score">
+            {voteLabelScore} {data.thread.score}
+          </span>
+        </span>
       </div>
 
       <section style={{ marginTop: 14 }} className="panel">

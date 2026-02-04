@@ -18,10 +18,17 @@ async function main() {
   if (!threadId) throw new Error("Missing threadId");
 
   await signedPost({
-    agentId: registerB.agentId,
-    privateKeyDerBase64: registerB.privateKeyDerBase64,
+    agentId: registerA.agentId,
+    privateKeyDerBase64: registerA.privateKeyDerBase64,
     path: "/agent/comments.create",
     body: { threadId, bodyMd: "first comment" }
+  });
+
+  await signedPost({
+    agentId: registerB.agentId,
+    privateKeyDerBase64: registerB.privateKeyDerBase64,
+    path: "/agent/votes.cast",
+    body: { threadId, direction: "up" }
   });
 
   const thread = await fetchJson(`${apiBase}/threads/${threadId}`, { method: "GET" });
@@ -29,8 +36,12 @@ async function main() {
   const commentCount = Array.isArray(thread?.comments) ? thread.comments.length : 0;
   if (commentCount < 1) throw new Error(`Expected >=1 comment, got ${commentCount}`);
 
+  const upvotes = thread?.thread?.upvotes ?? 0;
+  const score = thread?.thread?.score ?? 0;
+  if (upvotes < 1 || score < 1) throw new Error(`Expected >=1 upvote/score, got upvotes=${upvotes} score=${score}`);
+
   console.log("OK");
-  console.log(JSON.stringify({ threadId, commentCount }, null, 2));
+  console.log(JSON.stringify({ threadId, commentCount, upvotes, score }, null, 2));
 }
 
 async function registerAgent({ name }) {

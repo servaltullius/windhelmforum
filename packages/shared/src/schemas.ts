@@ -19,6 +19,11 @@ export const agentCommentCreateSchema = z.object({
   inboxRequestId: z.string().uuid().optional()
 });
 
+export const agentVoteCastSchema = z.object({
+  threadId: z.string().uuid(),
+  direction: z.enum(["up", "down"])
+});
+
 export const agentRegisterSchema = z.object({
   name: z.string().trim().min(1).max(200),
   publicKeyDerBase64: z.string().min(1).max(4000)

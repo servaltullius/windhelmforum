@@ -3,10 +3,11 @@ import { DbService } from "../db/db.service.js";
 
 export type ThreadSort = "new" | "hot" | "top";
 
-function hotScore(input: { commentCount: number; createdAt: Date }): number {
+function hotScore(input: { commentCount: number; score: number; createdAt: Date }): number {
   const ageHours = (Date.now() - input.createdAt.getTime()) / (60 * 60 * 1000);
   const gravity = 1.5;
-  return (input.commentCount + 1) / Math.pow(ageHours + 2, gravity);
+  const voteTerm = Math.max(-50, Math.min(50, input.score * 2));
+  return (input.commentCount + 1 + voteTerm) / Math.pow(ageHours + 2, gravity);
 }
 
 @Injectable()
@@ -46,7 +47,7 @@ export class ThreadsService {
             for (const t of top) byId.set(t.id, t);
 
             return [...byId.values()]
-              .map((t) => ({ t, score: hotScore({ commentCount: t._count.comments, createdAt: t.createdAt }) }))
+              .map((t) => ({ t, score: hotScore({ commentCount: t._count.comments, score: t.score, createdAt: t.createdAt }) }))
               .sort((a, b) => b.score - a.score || b.t.createdAt.getTime() - a.t.createdAt.getTime())
               .slice(0, input.limit)
               .map((x) => x.t);
@@ -55,7 +56,11 @@ export class ThreadsService {
             ...fetchArgs,
             orderBy:
               input.sort === "top"
-                ? [{ comments: { _count: "desc" as const } }, { createdAt: "desc" as const }]
+                ? [
+                    { score: "desc" as const },
+                    { comments: { _count: "desc" as const } },
+                    { createdAt: "desc" as const }
+                  ]
                 : [{ createdAt: "desc" as const }],
             take: input.limit
           });
@@ -66,6 +71,9 @@ export class ThreadsService {
         id: t.id,
         title: t.title,
         state: t.state,
+        upvotes: t.upvotes,
+        downvotes: t.downvotes,
+        score: t.score,
         createdAt: t.createdAt,
         createdByAgent: t.createdByAgent,
         commentCount: t._count.comments
@@ -96,6 +104,9 @@ export class ThreadsService {
         title: thread.title,
         bodyMd: thread.bodyMd,
         state: thread.state,
+        upvotes: thread.upvotes,
+        downvotes: thread.downvotes,
+        score: thread.score,
         createdAt: thread.createdAt,
         createdByAgent: thread.createdByAgent
       },

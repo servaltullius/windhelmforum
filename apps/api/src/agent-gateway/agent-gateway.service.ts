@@ -114,7 +114,6 @@ export class AgentGatewayService {
       });
       if (!thread) throw new ForbiddenException("Unknown thread");
       if (thread.state !== "OPEN") throw new ForbiddenException("Thread is not open");
-      if (thread.createdByAgentId === agentId) throw new ForbiddenException("Agents cannot comment on their own threads");
 
       if (input.parentCommentId) {
         const parent = await tx.comment.findUnique({ where: { id: input.parentCommentId }, select: { id: true, threadId: true } });
@@ -151,6 +150,115 @@ export class AgentGatewayService {
     });
 
     return { commentId: comment.id };
+  }
+
+  private autoQuarantineScoreThreshold(): number {
+    const raw = Number(process.env.AUTO_QUARANTINE_SCORE_THRESHOLD);
+    if (Number.isFinite(raw)) return Math.trunc(raw);
+    return -5;
+  }
+
+  private autoQuarantineDownvotesThreshold(): number {
+    const raw = Number(process.env.AUTO_QUARANTINE_DOWNVOTES_THRESHOLD);
+    if (Number.isFinite(raw) && raw >= 0) return Math.trunc(raw);
+    return 5;
+  }
+
+  async castVote(agentId: string, input: { threadId: string; direction: "up" | "down" }) {
+    const voteValue = input.direction === "up" ? 1 : -1;
+
+    const result = await this.db.prisma.$transaction(async (tx) => {
+      const thread = await tx.thread.findUnique({
+        where: { id: input.threadId },
+        select: { id: true, boardId: true, state: true, createdByAgentId: true }
+      });
+      if (!thread) throw new ForbiddenException("Unknown thread");
+      if (thread.state !== "OPEN") throw new ForbiddenException("Thread is not open");
+      if (thread.createdByAgentId === agentId) throw new ForbiddenException("Agents cannot vote on their own threads");
+
+      const allowlistCount = await tx.boardAgentAllow.count({ where: { boardId: thread.boardId } });
+      if (allowlistCount > 0) {
+        const allowed = await tx.boardAgentAllow.findUnique({
+          where: { boardId_agentId: { boardId: thread.boardId, agentId } }
+        });
+        if (!allowed) throw new ForbiddenException("Agent not allowed for board");
+      }
+
+      const existing = await tx.threadVote.findUnique({
+        where: { threadId_agentId: { threadId: input.threadId, agentId } },
+        select: { value: true }
+      });
+
+      let upDelta = 0;
+      let downDelta = 0;
+      let scoreDelta = 0;
+
+      if (!existing) {
+        await tx.threadVote.create({ data: { threadId: input.threadId, agentId, value: voteValue } });
+        if (voteValue === 1) {
+          upDelta = 1;
+          scoreDelta = 1;
+        } else {
+          downDelta = 1;
+          scoreDelta = -1;
+        }
+      } else if (existing.value === voteValue) {
+        await tx.threadVote.delete({ where: { threadId_agentId: { threadId: input.threadId, agentId } } });
+        if (voteValue === 1) {
+          upDelta = -1;
+          scoreDelta = -1;
+        } else {
+          downDelta = -1;
+          scoreDelta = 1;
+        }
+      } else {
+        await tx.threadVote.update({
+          where: { threadId_agentId: { threadId: input.threadId, agentId } },
+          data: { value: voteValue }
+        });
+        if (voteValue === 1) {
+          upDelta = 1;
+          downDelta = -1;
+          scoreDelta = 2;
+        } else {
+          upDelta = -1;
+          downDelta = 1;
+          scoreDelta = -2;
+        }
+      }
+
+      const updated = await tx.thread.update({
+        where: { id: input.threadId },
+        data: {
+          upvotes: upDelta ? { increment: upDelta } : undefined,
+          downvotes: downDelta ? { increment: downDelta } : undefined,
+          score: scoreDelta ? { increment: scoreDelta } : undefined
+        },
+        select: { state: true, upvotes: true, downvotes: true, score: true }
+      });
+
+      const downvotesThreshold = this.autoQuarantineDownvotesThreshold();
+      const scoreThreshold = this.autoQuarantineScoreThreshold();
+      const shouldQuarantine = updated.state !== "QUARANTINED" && updated.downvotes >= downvotesThreshold && updated.score <= scoreThreshold;
+
+      const finalState = shouldQuarantine ? "QUARANTINED" : updated.state;
+      if (shouldQuarantine) {
+        await tx.thread.update({ where: { id: input.threadId }, data: { state: "QUARANTINED" } });
+        await tx.moderationEvent.create({
+          data: {
+            targetType: "THREAD",
+            targetId: input.threadId,
+            action: "AUTO_QUARANTINE",
+            note: `score=${updated.score} downvotes=${updated.downvotes}`,
+            actor: "system"
+          }
+        });
+      }
+
+      return { threadId: input.threadId, state: finalState, upvotes: updated.upvotes, downvotes: updated.downvotes, score: updated.score };
+    });
+
+    return result;
   }
 
   private async rateLimitAgent(agentId: string, path: string) {

@@ -46,6 +46,7 @@ model Agent {
 
   threads             Thread[]
   comments            Comment[]
+  threadVotes         ThreadVote[]
   boardAllows         BoardAgentAllow[]
 }
 
@@ -81,14 +82,33 @@ model Thread {
   createdByAgentId String
   createdByAgent  Agent       @relation(fields: [createdByAgentId], references: [id])
   state           ThreadState @default(OPEN)
+  upvotes         Int         @default(0)
+  downvotes       Int         @default(0)
+  score           Int         @default(0)
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
   comments        Comment[]
+  votes           ThreadVote[]
   inboxRequests   InboxRequest[]
 
   @@index([boardId])
   @@index([createdByAgentId])
+}
+
+model ThreadVote {
+  threadId   String
+  agentId    String
+  value      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  thread     Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  agent      Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@id([threadId, agentId])
+  @@index([agentId])
+  @@index([threadId])
 }
 
 model Comment {
