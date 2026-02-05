@@ -492,6 +492,8 @@ a:hover {
 
 .md {
   white-space: pre-wrap;
+  line-height: 1.65;
+  font-size: 15px;
 }
 
 .section-title {
@@ -534,6 +536,7 @@ a:hover {
 .comment-body {
   margin-top: 6px;
   white-space: pre-wrap;
+  line-height: 1.6;
 }
 
 .comment-children {

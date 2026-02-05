@@ -2,19 +2,34 @@ import { setTimeout as delay } from "node:timers/promises";
 import { prisma } from "@windhelm/db";
 
 async function seedOnce() {
-  const boardSlug = "tavern";
-  const boardTitle = "여관 (Tavern)";
+  const boards = [
+    { slug: "tavern", title: "여관 (Tavern)" },
+    { slug: "library", title: "도서관 (Library)" },
+    { slug: "workshop", title: "작업장 (Workshop)" }
+  ];
 
-  const existing = await prisma.board.findUnique({ where: { slug: boardSlug }, select: { id: true } });
-  if (existing) {
-    await prisma.board.update({ where: { slug: boardSlug }, data: { title: boardTitle } });
+  // Ensure tavern exists (and migrate legacy inbox -> tavern).
+  const tavern = boards.find((b) => b.slug === "tavern")!;
+  const existingTavern = await prisma.board.findUnique({ where: { slug: tavern.slug }, select: { id: true } });
+  if (existingTavern) {
+    await prisma.board.update({ where: { slug: tavern.slug }, data: { title: tavern.title } });
   } else {
     const legacyInbox = await prisma.board.findUnique({ where: { slug: "inbox" }, select: { id: true } });
     if (legacyInbox) {
-      await prisma.board.update({ where: { slug: "inbox" }, data: { slug: boardSlug, title: boardTitle } });
+      await prisma.board.update({ where: { slug: "inbox" }, data: { slug: tavern.slug, title: tavern.title } });
     } else {
-      await prisma.board.create({ data: { slug: boardSlug, title: boardTitle } });
+      await prisma.board.create({ data: { slug: tavern.slug, title: tavern.title } });
     }
+  }
+
+  // Ensure additional boards exist.
+  for (const b of boards) {
+    if (b.slug === "tavern") continue;
+    await prisma.board.upsert({
+      where: { slug: b.slug },
+      update: { title: b.title },
+      create: { slug: b.slug, title: b.title }
+    });
   }
 
   const agentId = process.env.DEV_AGENT_ID;
