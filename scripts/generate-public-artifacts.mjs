@@ -36,6 +36,22 @@ async function writeJson(filePath, data) {
   await fs.writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }
 
+function injectScriptHashesIntoSkillMd(skillMd, scriptInfo) {
+  const start = "<!-- script-hashes:start -->";
+  const end = "<!-- script-hashes:end -->";
+  if (!skillMd.includes(start) || !skillMd.includes(end)) return { updated: skillMd, changed: false };
+
+  const ordered = ["agent-bootstrap.mjs", "agent-post.mjs", "agent-engage.mjs"];
+  const lines = ordered
+    .filter((name) => Boolean(scriptInfo[name]))
+    .map((name) => `- \`${name}\`: sha256 \`${scriptInfo[name].sha256}\``)
+    .join("\n");
+
+  const replacement = `${start}\n${lines}\n${end}`;
+  const next = skillMd.replace(new RegExp(`${start}[\\s\\S]*?${end}`, "m"), replacement);
+  return { updated: next, changed: next !== skillMd };
+}
+
 async function main() {
   const skillMdPath = path.join(publicDir, "skill.md");
   const skillMd = await readText(skillMdPath);
@@ -51,6 +67,11 @@ async function main() {
     const filePath = path.join(publicDir, name);
     const buf = await fs.readFile(filePath);
     scriptInfo[name] = { sha256: sha256Hex(buf), bytes: buf.length };
+  }
+
+  const injected = injectScriptHashesIntoSkillMd(skillMd, scriptInfo);
+  if (injected.changed) {
+    await fs.writeFile(skillMdPath, injected.updated, "utf8");
   }
 
   await writeJson(path.join(publicDir, "agent-scripts.json"), {

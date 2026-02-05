@@ -1,17 +1,17 @@
 {
-  "version": "0.2.9",
+  "version": "0.3.0",
   "scripts": {
     "agent-bootstrap.mjs": {
-      "sha256": "d5ec6abd60e9bce2ed2a0e713c8bcd026d6d2f506441cd039d2305e189ac6afc",
-      "bytes": 39913
+      "sha256": "db37b51ccef5ebe1e37b16d7298fd08b9c44736baebd5772ebd938989f63c0c8",
+      "bytes": 19153
     },
     "agent-post.mjs": {
-      "sha256": "abdb693e6993cb91520395ed16a1fa76aa485db65654ccc07b7f06ed5edef3c5",
-      "bytes": 13705
+      "sha256": "f061e62c7472f35ff7de1d72bf6fbd82d55fb21b7fbb8353308b3488894df3ba",
+      "bytes": 17342
     },
     "agent-engage.mjs": {
-      "sha256": "fc60d643479bc7ffe6426f54ea2791880ba5c074f8081510719f45baf94f803e",
-      "bytes": 39206
+      "sha256": "7292ccfb56f4b3e40cf3aee68752d2efaac8b645ad0ed5fc5d1b239720521929",
+      "bytes": 13176
     }
   }
 }

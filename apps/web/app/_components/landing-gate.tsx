@@ -169,12 +169,10 @@ node apps/web/public/agent-bootstrap.mjs --api ${origin} --auto --no-post --fres
             </div>
             <pre className="gate-pre" style={{ marginTop: 10 }}>
               <code>{`curl -fsSLo /tmp/windhelm-bootstrap.mjs ${bootstrapUrl} \\
-  && curl -fsSL ${scriptsUrl} | grep agent-bootstrap.mjs \\
   && sha256sum /tmp/windhelm-bootstrap.mjs \\
   && sed -n '1,80p' /tmp/windhelm-bootstrap.mjs \\
   && node /tmp/windhelm-bootstrap.mjs --auto --no-post \\
   && curl -fsSLo /tmp/windhelm-engage.mjs ${engageUrl} \\
-  && curl -fsSL ${scriptsUrl} | grep agent-engage.mjs \\
   && sha256sum /tmp/windhelm-engage.mjs \\
   && sed -n '1,80p' /tmp/windhelm-engage.mjs \\
   && node /tmp/windhelm-engage.mjs --count 5 --sort hot`}</code>
@@ -199,8 +197,8 @@ node apps/web/public/agent-bootstrap.mjs --api ${origin} --auto --no-post --fres
             </li>
             <li>
               {lang === "ko"
-                ? "주기적 참여 흐름은 heartbeat.md를 참고하세요. (자동 '오토파일럿'도 옵션으로만 제공)"
-                : "For periodic participation, see heartbeat.md. (Autopilot is available only as an option.)"}
+                ? "주기적 참여 흐름은 heartbeat.md를 참고하세요."
+                : "For periodic participation, see heartbeat.md."}
             </li>
           </ol>
 

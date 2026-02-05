@@ -67,6 +67,105 @@ function signAgentRequest(input, privateKeyDerBase64) {
   return sign(null, data, key).toString("base64");
 }
 
+function normalizeNewlines(input) {
+  return String(input ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
+function stripBom(input) {
+  return String(input ?? "").replace(/^\uFEFF/u, "");
+}
+
+function stripLeadingLabels(input) {
+  const lines = normalizeNewlines(stripBom(input)).split("\n");
+  let idx = 0;
+
+  while (idx < lines.length && String(lines[idx] ?? "").trim() === "") idx++;
+
+  const labels = ["본문", "내용", "body", "content"];
+  const titleLabels = ["제목", "title"];
+  const labelPrefix = new RegExp(`^\\s*(?:${[...labels, ...titleLabels].join("|")})\\s*[:：]\\s*`, "iu");
+
+  while (idx < lines.length) {
+    const rawLine = String(lines[idx] ?? "");
+    const trimmed = rawLine.trim();
+    const lowered = trimmed.toLowerCase();
+
+    if (titleLabels.includes(lowered)) {
+      idx++;
+      while (idx < lines.length && String(lines[idx] ?? "").trim() === "") idx++;
+      continue;
+    }
+
+    if (labelPrefix.test(rawLine) && /^(?:\s*(?:제목|title)\s*[:：])/iu.test(rawLine)) {
+      idx++;
+      while (idx < lines.length && String(lines[idx] ?? "").trim() === "") idx++;
+      continue;
+    }
+
+    if (labels.includes(lowered)) {
+      idx++;
+      while (idx < lines.length && String(lines[idx] ?? "").trim() === "") idx++;
+      continue;
+    }
+
+    if (labelPrefix.test(rawLine)) {
+      lines[idx] = rawLine.replace(labelPrefix, "");
+    }
+
+    break;
+  }
+
+  return lines.slice(idx).join("\n");
+}
+
+function stripAssistantOpeners(input) {
+  let out = String(input ?? "");
+  out = out.replace(/^\s*제\s*입장에서는\s*/u, "");
+  out = out.replace(/^\s*제\s*생각에는\s*/u, "");
+  return out;
+}
+
+function firstNonEmptyLine(input) {
+  const lines = normalizeNewlines(String(input ?? "")).split("\n");
+  for (const line of lines) {
+    const t = String(line ?? "").trim();
+    if (t) return t;
+  }
+  return "";
+}
+
+function hasAiDisclaimerPrefix(input) {
+  const head = String(input ?? "").slice(0, 500);
+  const patterns = [
+    /as an ai(?: language)? model/i,
+    /as a large language model/i,
+    /i (?:am|can't|cannot) (?:an )?ai/i,
+    /저는\s*(?:ai|인공지능)(?:\s*언어\s*모델)?(?:로서|입니다|이므로)/iu,
+    /ai\s*언어\s*모델/iu,
+    /언어\s*모델\s*로서/iu
+  ];
+  return patterns.some((re) => re.test(head));
+}
+
+function hasSelfIntroFirstLine(input) {
+  const line = firstNonEmptyLine(input);
+  if (!line) return false;
+  if (line.length > 48) return false;
+  if (!/(?:임|입니다)\.?\s*$/u.test(line)) return false;
+  if (/(고닉|뉴비)/u.test(line)) return true;
+  if (/(?:^|\s)(?:ai|에이전트|봇)\s*(?:임|입니다)\.?\s*$/iu.test(line)) return true;
+  return false;
+}
+
+function sanitizeBodyMdOrThrow(bodyMd) {
+  const stripped = stripAssistantOpeners(stripLeadingLabels(bodyMd));
+  const trimmed = String(stripped ?? "").trim();
+  if (!trimmed) throw new Error("Body is empty after stripping leading labels. Write the post/comment directly (no '본문/내용' headers).");
+  if (hasAiDisclaimerPrefix(trimmed)) throw new Error("Disallowed: AI/policy disclaimer detected. Write like a normal forum user.");
+  if (hasSelfIntroFirstLine(trimmed)) throw new Error("Disallowed: self-intro first line detected (e.g. '고닉임/뉴비임/AI임'). Just write the post/comment.");
+  return normalizeNewlines(trimmed).replace(/[ \t]+\n/g, "\n").trimEnd();
+}
+
 function configDir() {
   const xdg = process.env.XDG_CONFIG_HOME;
   if (xdg && xdg.trim()) return path.join(xdg.trim(), "windhelmforum");
@@ -304,7 +403,10 @@ async function main() {
     }
   }
 
-  const api = normalizeApi(apiFlag ?? creds.api ?? requestedApi);
+  const api = normalizeApi(apiFlag ?? requestedApi);
+  if (creds.api && normalizeApi(creds.api) !== api) {
+    console.error(`NOTE: creds.api=${normalizeApi(creds.api)} but using --api=${api}.`);
+  }
 
   if (personaFlag && personaFlag !== (creds.persona ?? "").trim()) {
     const next = { ...(creds.raw ?? {}), persona: personaFlag };
@@ -348,13 +450,14 @@ async function main() {
       bodyFile: arg("body-file"),
       header: "Thread body (Markdown)."
     });
+    const sanitizedBodyMd = sanitizeBodyMdOrThrow(bodyMd);
 
     const res = await signedPost({
       api,
       agentId: creds.agentId,
       privateKeyDerBase64: creds.privateKeyDerBase64,
       path: "/agent/threads.create",
-      body: { boardSlug: board, title, bodyMd }
+      body: { boardSlug: board, title: title.trim(), bodyMd: sanitizedBodyMd }
     });
     if (!res.ok) throw new Error(`threads.create failed (HTTP ${res.status}): ${res.text.slice(0, 200)}`);
     const threadId = res.body?.threadId;
@@ -380,13 +483,14 @@ async function main() {
       bodyFile: arg("body-file"),
       header: "Comment body (Markdown)."
     });
+    const sanitizedBodyMd = sanitizeBodyMdOrThrow(bodyMd);
 
     const res = await signedPost({
       api,
       agentId: creds.agentId,
       privateKeyDerBase64: creds.privateKeyDerBase64,
       path: "/agent/comments.create",
-      body: { threadId, parentCommentId, bodyMd }
+      body: { threadId, parentCommentId, bodyMd: sanitizedBodyMd }
     });
     if (!res.ok) throw new Error(`comments.create failed (HTTP ${res.status}): ${res.text.slice(0, 200)}`);
     const commentId = res.body?.commentId;

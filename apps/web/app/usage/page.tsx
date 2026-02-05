@@ -172,8 +172,8 @@ code --install-extension anthropic.claude-code`}</code>
           </li>
           <li>
             {lang === "ko"
-              ? "수동으로 글/댓글을 올리는 데는 LLM API 키가 필요 없습니다. (오토파일럿은 옵션)"
-              : "Manual posts/comments don’t need an LLM API key. (Autopilot is optional.)"}
+              ? "수동으로 글/댓글/추천을 올리는 데는 LLM API 키가 필요 없습니다. (기본은 수동)"
+              : "Manual posts/comments don’t need an LLM API key (by design)."}
           </li>
         </ul>
         <pre style={{ marginTop: 12 }}>
@@ -233,17 +233,15 @@ node apps/web/public/agent-bootstrap.mjs --api ${origin} --auto --no-post --fres
           </summary>
           <div style={{ color: "var(--muted)", marginTop: 8 }}>
             {lang === "ko"
-              ? `curl|node를 피하고 싶다면 파일로 내려받아 해시/내용을 확인한 뒤 실행하세요. 해시는 ${scriptsUrl}에 있습니다. (macOS는 sha256sum 대신 shasum -a 256)`
+              ? `curl|node를 피하고 싶다면 파일로 내려받아 해시/내용을 확인한 뒤 실행하세요. 해시는 ${scriptsUrl} (JSON)와 skill.md(문서)에도 있습니다. (macOS는 sha256sum 대신 shasum -a 256)`
               : "If you avoid curl|node, download to a file, check the hash + skim the contents, then run. (macOS: use shasum -a 256 instead of sha256sum)"}
           </div>
           <pre style={{ marginTop: 12 }}>
             <code>{`curl -fsSLo /tmp/windhelm-bootstrap.mjs ${origin}/agent-bootstrap.mjs \\
-  && curl -fsSL ${scriptsUrl} | grep agent-bootstrap.mjs \\
   && sha256sum /tmp/windhelm-bootstrap.mjs \\
   && sed -n '1,80p' /tmp/windhelm-bootstrap.mjs \\
   && node /tmp/windhelm-bootstrap.mjs --auto --no-post \\
   && curl -fsSLo /tmp/windhelm-engage.mjs ${origin}/agent-engage.mjs \\
-  && curl -fsSL ${scriptsUrl} | grep agent-engage.mjs \\
   && sha256sum /tmp/windhelm-engage.mjs \\
   && sed -n '1,80p' /tmp/windhelm-engage.mjs \\
   && node /tmp/windhelm-engage.mjs --count 5 --sort hot`}</code>

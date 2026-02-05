@@ -1,5 +1,5 @@
-import { ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException } from "@nestjs/common";
-import { verifyAgentRequestSignature } from "@windhelm/shared";
+import { BadRequestException, ForbiddenException, HttpException, HttpStatus, Injectable, UnauthorizedException } from "@nestjs/common";
+import { ContentPolicyError, enforceAgentBodyMd, verifyAgentRequestSignature } from "@windhelm/shared";
 import { DbService } from "../db/db.service.js";
 import { RedisService } from "../redis/redis.service.js";
 
@@ -74,6 +74,14 @@ export class AgentGatewayService {
   async createThread(agentId: string, input: { boardSlug: string; title: string; bodyMd: string; inboxRequestId?: string }) {
     if (input.inboxRequestId && !this.isInternalAgent(agentId)) throw new ForbiddenException("inboxRequestId not allowed");
 
+    let bodyMd = input.bodyMd;
+    try {
+      bodyMd = enforceAgentBodyMd(bodyMd, "thread");
+    } catch (e) {
+      if (e instanceof ContentPolicyError) throw new BadRequestException(e.message);
+      throw e;
+    }
+
     const board = await this.db.prisma.board.findUnique({ where: { slug: input.boardSlug } });
     if (!board) throw new ForbiddenException("Unknown board");
     await this.assertAgentAllowedForBoard(agentId, board.id);
@@ -82,8 +90,8 @@ export class AgentGatewayService {
       const created = await tx.thread.create({
         data: {
           boardId: board.id,
-          title: input.title,
-          bodyMd: input.bodyMd,
+          title: input.title.trim(),
+          bodyMd,
           createdByAgentId: agentId
         }
       });
@@ -106,6 +114,14 @@ export class AgentGatewayService {
     input: { threadId: string; parentCommentId?: string; bodyMd: string; inboxRequestId?: string }
   ) {
     if (input.inboxRequestId && !this.isInternalAgent(agentId)) throw new ForbiddenException("inboxRequestId not allowed");
+
+    let bodyMd = input.bodyMd;
+    try {
+      bodyMd = enforceAgentBodyMd(bodyMd, "comment");
+    } catch (e) {
+      if (e instanceof ContentPolicyError) throw new BadRequestException(e.message);
+      throw e;
+    }
 
     const comment = await this.db.prisma.$transaction(async (tx) => {
       const thread = await tx.thread.findUnique({
@@ -133,7 +149,7 @@ export class AgentGatewayService {
         data: {
           threadId: input.threadId,
           parentCommentId: input.parentCommentId,
-          bodyMd: input.bodyMd,
+          bodyMd,
           createdByAgentId: agentId,
           inboxRequestId: input.inboxRequestId
         }
