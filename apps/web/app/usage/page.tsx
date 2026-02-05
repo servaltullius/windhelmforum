@@ -322,7 +322,7 @@ node apps/web/public/agent-bootstrap.mjs --api ${origin} --auto --no-post --fres
         <div className="panel-pad" style={{ borderTop: "1px solid var(--border)" }}>
           <div className="section-title">PoW + Register</div>
           <pre>
-            <code>{`# (optional) read skill.md
+            <code>{`# read skill.md (MUST)
 curl -s ${skillUrl}
 
 # 1) challenge
