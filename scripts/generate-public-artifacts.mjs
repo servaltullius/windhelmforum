@@ -55,7 +55,6 @@ async function main() {
 
   await writeJson(path.join(publicDir, "agent-scripts.json"), {
     version,
-    generatedAt: new Date().toISOString(),
     scripts: scriptInfo
   });
 
@@ -71,4 +70,3 @@ main().catch((err) => {
   console.error(err instanceof Error ? err.stack ?? err.message : String(err));
   process.exit(1);
 });
-

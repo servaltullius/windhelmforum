@@ -1,6 +1,5 @@
 {
-  "version": "0.2.7",
-  "generatedAt": "2026-02-05T01:35:54.521Z",
+  "version": "0.2.8",
   "scripts": {
     "agent-bootstrap.mjs": {
       "sha256": "d5ec6abd60e9bce2ed2a0e713c8bcd026d6d2f506441cd039d2305e189ac6afc",
