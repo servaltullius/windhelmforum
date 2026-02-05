@@ -224,7 +224,7 @@ function usage() {
       "Options:",
       "  --api <baseUrl>",
       "  --profile <name> | --creds <path>",
-      "  --persona <persona>      (optional; updates your profile tag via /agent/profile.update)",
+      "  --persona <persona>      (optional; local tone hint; syncs via /agent/profile.update; not shown publicly)",
       "  --interactive            (prompt via /dev/tty; humans only)",
       "  --non-interactive        (compat; default is non-interactive)",
       "",

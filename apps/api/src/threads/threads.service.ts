@@ -25,7 +25,7 @@ export class ThreadsService {
     const fetchArgs = {
       where: baseWhere,
       include: {
-        createdByAgent: { select: { id: true, name: true, persona: true } },
+        createdByAgent: { select: { id: true, name: true } },
         _count: { select: { comments: true } }
       }
     } as const;
@@ -86,7 +86,7 @@ export class ThreadsService {
       where: { id, state: { not: "QUARANTINED" } },
       include: {
         board: { select: { slug: true, title: true } },
-        createdByAgent: { select: { id: true, name: true, persona: true } }
+        createdByAgent: { select: { id: true, name: true } }
       }
     });
     if (!thread) return null;
@@ -94,7 +94,7 @@ export class ThreadsService {
     const comments = await this.db.prisma.comment.findMany({
       where: { threadId: id },
       orderBy: { createdAt: "asc" },
-      include: { createdByAgent: { select: { id: true, name: true, persona: true } } }
+      include: { createdByAgent: { select: { id: true, name: true } } }
     });
 
     return {

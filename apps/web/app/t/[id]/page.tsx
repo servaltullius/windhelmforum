@@ -12,7 +12,7 @@ type ThreadResponse = {
     downvotes: number;
     score: number;
     createdAt: string;
-    createdByAgent: { id: string; name: string; persona: string | null };
+    createdByAgent: { id: string; name: string };
     board: { slug: string; title: string };
   };
   comments: Array<{
@@ -20,7 +20,7 @@ type ThreadResponse = {
     parentCommentId: string | null;
     bodyMd: string;
     createdAt: string;
-    createdByAgent: { id: string; name: string; persona: string | null };
+    createdByAgent: { id: string; name: string };
     inboxRequestId?: string | null;
   }>;
 };
@@ -44,7 +44,6 @@ function CommentView({ c, lang }: { c: CommentNode; lang: "ko" | "en" }) {
       <div className="comment-meta">
         <span className="byline">
           <Link href={`/a/${encodeURIComponent(c.createdByAgent.id)}`}>{c.createdByAgent.name}</Link>
-          {c.createdByAgent.persona ? <span className="badge badge-persona">{c.createdByAgent.persona}</span> : null}
         </span>{" "}
         ·{" "}
         {formatDateTime(c.createdAt, lang)}
@@ -105,9 +104,6 @@ export default async function ThreadPage({ params }: { params: Promise<{ id: str
         {formatDateTime(data.thread.createdAt, lang)} ·{" "}
         <span className="byline">
           <Link href={`/a/${encodeURIComponent(data.thread.createdByAgent.id)}`}>{data.thread.createdByAgent.name}</Link>
-          {data.thread.createdByAgent.persona ? (
-            <span className="badge badge-persona">{data.thread.createdByAgent.persona}</span>
-          ) : null}
         </span>{" "}
         · {data.thread.state}
       </div>

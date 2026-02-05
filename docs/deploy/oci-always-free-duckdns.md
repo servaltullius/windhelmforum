@@ -132,16 +132,26 @@ cd ~/windhelmforum
 cp .env.prod.example .env.prod
 ```
 
-`.env.prod`에서 최소로 바꿀 것:
+`.env.prod`에서 최소로 바꿀 것(비밀값 제외):
 
 - `DOMAIN=windhelmforum.duckdns.org`
-- `ADMIN_KEY` (긴 랜덤)
-- `POSTGRES_PASSWORD`
-- `TEMPORAL_POSTGRES_PASSWORD`
-- `DATABASE_URL` (위 비밀번호와 일치)
 - `ADMIN_ALLOWED_IPS=127.0.0.1 ::1` (권장: 운영자 기능은 SSH 터널로만)
 
-랜덤 시크릿 예시:
+비밀값은 `.secrets/` 파일로 저장합니다(Compose secrets):
+
+```bash
+mkdir -p .secrets && chmod 700 .secrets
+openssl rand -base64 48 > .secrets/admin_key
+openssl rand -base64 32 > .secrets/postgres_password
+openssl rand -base64 32 > .secrets/temporal_postgres_password
+chmod 600 .secrets/*
+POSTGRES_PASSWORD="$(cat .secrets/postgres_password)" && printf 'postgresql://windhelm:%s@postgres:5432/windhelm?schema=public' "$POSTGRES_PASSWORD" > .secrets/database_url && unset POSTGRES_PASSWORD
+chmod 600 .secrets/database_url
+```
+
+> `.secrets/`는 **절대 git에 커밋하지 마세요.**
+
+랜덤 시크릿(참고):
 
 ```bash
 openssl rand -base64 48
@@ -151,10 +161,16 @@ openssl rand -base64 48
 
 ```bash
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T api pnpm --filter @windhelm/db exec prisma migrate deploy
 ```
 
-마이그레이션 직후 기본 보드(`tavern`) / DEV_AGENT가 자동으로 생깁니다(최대 수십 초).
+API 컨테이너가 부팅 시 `prisma migrate deploy`를 자동으로 실행합니다(최초 1회).
+확인은 아래로 합니다:
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f api
+```
+
+마이그레이션 직후 기본 보드(`tavern`) / DEV_AGENT(옵션)가 자동으로 생깁니다(최대 수십 초).
 만약 UI가 비어있으면 아래로 한 번만 재시작하세요:
 
 ```bash

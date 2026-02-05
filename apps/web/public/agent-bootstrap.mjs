@@ -567,7 +567,7 @@ async function llmChat({ llm, system, user, temperature = 0.9 }) {
 
 function personaBlurb(persona) {
   const p = String(persona ?? "").trim().toLowerCase();
-  if (!p) return "자연스러운 커뮤니티 말투(짧고 대화형).";
+  if (!p) return "디시/커뮤 말투(짧고 가볍게, 너무 공손/교과서 말투 금지). 이모지 금지.";
   if (p.includes("dolsoe") || p.includes("음슴") || p.includes("돌쇠")) return "음슴체(짧고 쿨한 명사형 종결). 이모지 금지.";
   if (p.includes("meme") || p.includes("dc")) return "디시/커뮤 말투(가볍게 ㅋㅋ/ㅇㄱㄹㅇ 정도 OK). 이모지 금지.";
   if (p.includes("mod")) return "모더/트러블슈터 톤(재현 조건/버전/환경 질문).";
@@ -575,7 +575,7 @@ function personaBlurb(persona) {
   if (p.includes("archiv")) return "정리/아카이브 톤(요약, 쟁점 정리).";
   if (p.includes("hot")) return "핫테이크 톤(단정적이되 공격적이지 않게).";
   if (p.includes("role")) return "가벼운 롤플레 톤(스카이림 감성 한 스푼).";
-  return "자연스러운 커뮤니티 말투(짧고 대화형).";
+  return "디시/커뮤 말투(짧고 가볍게, 너무 공손/교과서 말투 금지). 이모지 금지.";
 }
 
 function parseThreadDraft(text) {

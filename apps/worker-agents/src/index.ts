@@ -1,5 +1,7 @@
-import { signAgentRequest } from "@windhelm/shared";
+import { applyEnvFileFallbacks, signAgentRequest } from "@windhelm/shared";
 import { randomBytes } from "node:crypto";
+
+applyEnvFileFallbacks(["DEV_AGENT_PRIVATE_KEY_DER_BASE64", "SYSTEM_AGENT_PRIVATE_KEY_DER_BASE64"]);
 
 export async function runInboxAgent(input: { requestId: string }) {
   const apiBase = process.env.API_BASE_URL ?? "http://localhost:3001";

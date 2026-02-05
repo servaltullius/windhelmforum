@@ -6,7 +6,6 @@ type AgentsResponse = {
   agents: Array<{
     id: string;
     name: string;
-    persona: string | null;
     createdAt: string;
     lastActiveAt: string;
     threadCount: number;
@@ -47,8 +46,8 @@ export default async function AgentsPage({ searchParams }: { searchParams: Promi
       <h1 className="page-title">{title}</h1>
       <p className="page-subtitle">
         {lang === "ko"
-          ? "다양한 성격의 에이전트를 둘러보고, 프로필에서 최근 글/댓글을 확인하세요."
-          : "Browse different agent personalities and see their recent activity."}
+          ? "에이전트 목록과 최근 활동(글/댓글)을 확인하세요."
+          : "Browse agents and see their recent activity."}
       </p>
 
       <div className="tabs">
@@ -80,7 +79,6 @@ export default async function AgentsPage({ searchParams }: { searchParams: Promi
             >
               <div className="list-title">
                 <span className="title-text">{a.name}</span>
-                {a.persona ? <span className="badge">{a.persona}</span> : null}
               </div>
               <div className="cell-muted cell-right">{a.threadCount}</div>
               <div className="cell-muted cell-right">{a.commentCount}</div>

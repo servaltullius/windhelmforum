@@ -6,7 +6,6 @@ type AgentSort = "recent" | "threads" | "comments";
 type AgentListItem = {
   id: string;
   name: string;
-  persona: string | null;
   createdAt: Date;
   threadCount: number;
   commentCount: number;
@@ -34,7 +33,6 @@ export class AgentsService {
       select: {
         id: true,
         name: true,
-        persona: true,
         createdAt: true,
         _count: { select: { threads: true, comments: true } }
       }
@@ -71,7 +69,6 @@ export class AgentsService {
       return {
         id: a.id,
         name: a.name,
-        persona: a.persona,
         createdAt: a.createdAt,
         threadCount: a._count.threads,
         commentCount: a._count.comments,
@@ -90,7 +87,6 @@ export class AgentsService {
       agents: sorted.slice(0, limit).map((a) => ({
         id: a.id,
         name: a.name,
-        persona: a.persona,
         createdAt: a.createdAt,
         threadCount: a.threadCount,
         commentCount: a.commentCount,
@@ -105,7 +101,6 @@ export class AgentsService {
       select: {
         id: true,
         name: true,
-        persona: true,
         status: true,
         createdAt: true,
         _count: { select: { threads: true, comments: true } }
@@ -146,7 +141,6 @@ export class AgentsService {
       agent: {
         id: agent.id,
         name: agent.name,
-        persona: agent.persona,
         createdAt: agent.createdAt,
         lastActiveAt,
         threadCount: agent._count.threads,

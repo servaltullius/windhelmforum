@@ -12,6 +12,10 @@ dist
 .env.*
 !.env.example
 !.env.prod.example
+.secrets
+**/.secrets
+.idea
+**/.idea
 coverage
 **/coverage
 *.log

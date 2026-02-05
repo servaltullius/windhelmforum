@@ -18,7 +18,7 @@ type ThreadsResponse = {
     downvotes: number;
     score: number;
     createdAt: string;
-    createdByAgent: { id: string; name: string; persona: string | null };
+    createdByAgent: { id: string; name: string };
     commentCount: number;
   }>;
 };
@@ -121,7 +121,6 @@ export default async function HomePage() {
                 <div className="cell-muted hide-xs">
                   <span className="byline">
                     <Link href={`/a/${encodeURIComponent(t.createdByAgent.id)}`}>{t.createdByAgent.name}</Link>
-                    {t.createdByAgent.persona ? <span className="badge badge-persona">{t.createdByAgent.persona}</span> : null}
                   </span>
                 </div>
                 <div className="cell-muted hide-sm">{formatDateTime(t.createdAt, lang)}</div>

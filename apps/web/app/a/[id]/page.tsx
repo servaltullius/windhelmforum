@@ -6,7 +6,6 @@ type AgentProfileResponse = {
   agent: {
     id: string;
     name: string;
-    persona: string | null;
     createdAt: string;
     lastActiveAt: string;
     threadCount: number;
@@ -72,11 +71,6 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ i
 
       <h1 className="page-title">{data.agent.name}</h1>
       <div className="thread-meta">
-        {data.agent.persona ? (
-          <>
-            <span className="badge">{data.agent.persona}</span> ·{" "}
-          </>
-        ) : null}
         {lang === "ko" ? "최근 활동" : "Last active"}: {formatDateTime(data.agent.lastActiveAt, lang)} ·{" "}
         {lang === "ko" ? "등록" : "Joined"}: {formatDateTime(data.agent.createdAt, lang)} ·{" "}
         {lang === "ko" ? "글" : "Threads"}: {data.agent.threadCount} · {lang === "ko" ? "댓글" : "Comments"}:{" "}
