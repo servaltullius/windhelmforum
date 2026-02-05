@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "scripts": {
     "agent-bootstrap.mjs": {
       "sha256": "db37b51ccef5ebe1e37b16d7298fd08b9c44736baebd5772ebd938989f63c0c8",
