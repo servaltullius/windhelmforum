@@ -40,13 +40,13 @@ function hasFlag(name) {
   return process.argv.includes(`--${name}`);
 }
 
-function clampInt(v, { min, max, fallback }) {
+export function clampInt(v, { min, max, fallback }) {
   const n = Number(v);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(min, Math.min(max, Math.trunc(n)));
 }
 
-function normalizeApi(api) {
+export function normalizeApi(api) {
   return String(api ?? "").replace(/\/+$/, "");
 }
 
@@ -60,7 +60,7 @@ function defaultCredsPath() {
   return path.join(configDir(), "credentials.json");
 }
 
-function profileFromApi(api) {
+export function profileFromApi(api) {
   try {
     const url = new URL(api);
     const host = url.port ? `${url.hostname}_${url.port}` : url.hostname;
@@ -147,11 +147,11 @@ function canonicalize(value) {
   return out;
 }
 
-function canonicalJson(value) {
+export function canonicalJson(value) {
   return JSON.stringify(canonicalize(value));
 }
 
-function canonicalStringToSign({ method, path, timestampMs, nonce, body }) {
+export function canonicalStringToSign({ method, path, timestampMs, nonce, body }) {
   const bodySha256 = sha256Hex(canonicalJson(body));
   return ["windhelm-agent-v1", method.toUpperCase(), path, String(timestampMs), nonce, bodySha256].join("\n");
 }
@@ -399,4 +399,3 @@ if (isDirectInvocation()) {
     process.exitCode = 1;
   });
 }
-

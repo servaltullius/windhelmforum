@@ -1,48 +1,62 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 
-import { extractFirstJsonObject, parseVsCandidates, sampleVsCandidate, stripCodeFences } from "../apps/web/public/agent-engage.mjs";
+import {
+  canonicalJson,
+  canonicalStringToSign,
+  clampInt,
+  normalizeApi,
+  profileFromApi
+} from "../apps/web/public/agent-engage.mjs";
 
-test("stripCodeFences removes markdown fences", () => {
-  const raw = "```json\n{\"candidates\":[]}\n```";
-  assert.equal(stripCodeFences(raw), "{\"candidates\":[]}");
+test("clampInt clamps and falls back for non-numeric input", () => {
+  assert.equal(clampInt("8", { min: 1, max: 10, fallback: 5 }), 8);
+  assert.equal(clampInt("0", { min: 1, max: 10, fallback: 5 }), 1);
+  assert.equal(clampInt("99", { min: 1, max: 10, fallback: 5 }), 10);
+  assert.equal(clampInt("nope", { min: 1, max: 10, fallback: 5 }), 5);
 });
 
-test("extractFirstJsonObject extracts first JSON object", () => {
-  const raw = "noise\n```json\n{\"candidates\":[{\"text\":\"a\",\"p\":0.1}]}\n```\nmore";
-  assert.equal(extractFirstJsonObject(raw), "{\"candidates\":[{\"text\":\"a\",\"p\":0.1}]}");
+test("normalizeApi removes trailing slashes", () => {
+  assert.equal(normalizeApi("https://windhelmforum.com///"), "https://windhelmforum.com");
+  assert.equal(normalizeApi("http://localhost:3001/"), "http://localhost:3001");
 });
 
-test("parseVsCandidates validates and normalizes candidates", () => {
-  const raw = JSON.stringify({
-    candidates: [
-      { text: "a", p: 0.05 },
-      { text: "b", p: 0.02 },
-      { text: "  ", p: 0.03 },
-      { text: "c", p: "0.07" }
-    ]
+test("profileFromApi normalizes host+port key", () => {
+  assert.equal(profileFromApi("https://windhelmforum.com"), "windhelmforum.com");
+  assert.equal(profileFromApi("http://LOCALHOST:3001"), "localhost_3001");
+  assert.equal(profileFromApi("not-a-valid-url"), "default");
+});
+
+test("canonicalJson sorts object keys recursively", () => {
+  const out = canonicalJson({
+    z: [{ b: 1, a: 2 }],
+    a: { d: 4, c: 3 },
+    b: 2
   });
-  const parsed = parseVsCandidates(raw);
-  assert.ok(parsed);
-  assert.equal(parsed.length, 3);
-  assert.deepEqual(parsed[0], { text: "a", p: 0.05 });
-  assert.deepEqual(parsed[2], { text: "c", p: 0.07 });
+  assert.equal(out, '{"a":{"c":3,"d":4},"b":2,"z":[{"a":2,"b":1}]}');
 });
 
-test("sampleVsCandidate returns one of the texts", () => {
-  const candidates = [
-    { text: "a", p: 0.1 },
-    { text: "b", p: 0.1 }
-  ];
+test("canonicalStringToSign is stable for equivalent body objects", () => {
+  const common = {
+    method: "post",
+    path: "/agent/comments.create",
+    timestampMs: 1739059200000,
+    nonce: "nonce-1"
+  };
 
-  const realRandom = Math.random;
-  try {
-    Math.random = () => 0.0;
-    assert.equal(sampleVsCandidate(candidates), "a");
-    Math.random = () => 0.99999;
-    assert.equal(sampleVsCandidate(candidates), "b");
-  } finally {
-    Math.random = realRandom;
-  }
+  const a = canonicalStringToSign({ ...common, body: { b: 1, a: 2 } });
+  const b = canonicalStringToSign({ ...common, body: { a: 2, b: 1 } });
+
+  assert.equal(a, b);
+
+  const lines = a.split("\n");
+  assert.equal(lines[0], "windhelm-agent-v1");
+  assert.equal(lines[1], "POST");
+  assert.equal(lines[2], "/agent/comments.create");
+  assert.equal(lines[3], "1739059200000");
+  assert.equal(lines[4], "nonce-1");
+
+  const expectedBodyHash = createHash("sha256").update('{"a":2,"b":1}', "utf8").digest("hex");
+  assert.equal(lines[5], expectedBodyHash);
 });
-
