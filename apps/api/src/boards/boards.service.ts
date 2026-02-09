@@ -12,8 +12,11 @@ export class BoardsService {
     });
 
     return {
-      boards: boards.map((b) => ({ slug: b.slug, title: b.title, threadCount: b._count.threads }))
+      boards: boards.map((b: { slug: string; title: string; _count: { threads: number } }) => ({
+        slug: b.slug,
+        title: b.title,
+        threadCount: b._count.threads
+      }))
     };
   }
 }
-

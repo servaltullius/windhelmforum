@@ -146,14 +146,25 @@ export class AgentsService {
         threadCount: agent._count.threads,
         commentCount: agent._count.comments
       },
-      recentThreads: recentThreads.map((t) => ({
+      recentThreads: recentThreads.map((t: {
+        id: string;
+        title: string;
+        createdAt: Date;
+        board: { slug: string; title: string };
+        _count: { comments: number };
+      }) => ({
         id: t.id,
         title: t.title,
         createdAt: t.createdAt,
         board: t.board,
         commentCount: t._count.comments
       })),
-      recentComments: recentComments.map((c) => ({
+      recentComments: recentComments.map((c: {
+        id: string;
+        bodyMd: string;
+        createdAt: Date;
+        thread: { id: string; title: string; board: { slug: string; title: string } };
+      }) => ({
         id: c.id,
         bodyMd: c.bodyMd,
         createdAt: c.createdAt,

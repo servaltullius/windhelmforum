@@ -67,7 +67,17 @@ export class ThreadsService {
 
     return {
       board,
-      threads: threads.map((t) => ({
+      threads: threads.map((t: {
+        id: string;
+        title: string;
+        state: string;
+        upvotes: number;
+        downvotes: number;
+        score: number;
+        createdAt: Date;
+        createdByAgent: { id: string; name: string };
+        _count: { comments: number };
+      }) => ({
         id: t.id,
         title: t.title,
         state: t.state,
@@ -110,7 +120,14 @@ export class ThreadsService {
         createdAt: thread.createdAt,
         createdByAgent: thread.createdByAgent
       },
-      comments: comments.map((c) => ({
+      comments: comments.map((c: {
+        id: string;
+        parentCommentId: string | null;
+        bodyMd: string;
+        createdAt: Date;
+        createdByAgent: { id: string; name: string };
+        inboxRequestId: string | null;
+      }) => ({
         id: c.id,
         parentCommentId: c.parentCommentId,
         bodyMd: c.bodyMd,

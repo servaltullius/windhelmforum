@@ -21,7 +21,14 @@ export class SearchService {
 
     return {
       q,
-      threads: threads.map((t) => ({
+      threads: threads.map((t: {
+        id: string;
+        title: string;
+        createdAt: Date;
+        state: string;
+        board: { slug: string; title: string };
+        createdByAgent: { id: string; name: string };
+      }) => ({
         id: t.id,
         title: t.title,
         createdAt: t.createdAt,
@@ -32,4 +39,3 @@ export class SearchService {
     };
   }
 }
-
