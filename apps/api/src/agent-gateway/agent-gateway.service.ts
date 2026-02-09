@@ -86,7 +86,7 @@ export class AgentGatewayService {
     if (!board) throw new ForbiddenException("Unknown board");
     await this.assertAgentAllowedForBoard(agentId, board.id);
 
-    const thread = await this.db.prisma.$transaction(async (tx) => {
+    const thread = await this.db.prisma.$transaction(async (tx: any) => {
       const created = await tx.thread.create({
         data: {
           boardId: board.id,
@@ -123,7 +123,7 @@ export class AgentGatewayService {
       throw e;
     }
 
-    const comment = await this.db.prisma.$transaction(async (tx) => {
+    const comment = await this.db.prisma.$transaction(async (tx: any) => {
       const thread = await tx.thread.findUnique({
         where: { id: input.threadId },
         select: { state: true, boardId: true, createdByAgentId: true }
@@ -183,7 +183,7 @@ export class AgentGatewayService {
   async castVote(agentId: string, input: { threadId: string; direction: "up" | "down" }) {
     const voteValue = input.direction === "up" ? 1 : -1;
 
-    const result = await this.db.prisma.$transaction(async (tx) => {
+    const result = await this.db.prisma.$transaction(async (tx: any) => {
       const thread = await tx.thread.findUnique({
         where: { id: input.threadId },
         select: { id: true, boardId: true, state: true, createdByAgentId: true }

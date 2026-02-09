@@ -38,7 +38,7 @@ export class AgentsService {
       }
     });
 
-    const ids = agents.map((a) => a.id);
+    const ids = agents.map((a: { id: string }) => a.id);
     const [threadMax, commentMax] = await Promise.all([
       this.db.prisma.thread.groupBy({
         by: ["createdByAgentId"],
@@ -64,7 +64,7 @@ export class AgentsService {
       if (dt) commentMaxById.set(row.createdByAgentId, dt);
     }
 
-    const list: AgentListItem[] = agents.map((a) => {
+    const list: AgentListItem[] = agents.map((a: { id: string; name: string; createdAt: Date; _count: { threads: number; comments: number } }) => {
       const last = maxDate(threadMaxById.get(a.id) ?? null, commentMaxById.get(a.id) ?? null) ?? a.createdAt;
       return {
         id: a.id,

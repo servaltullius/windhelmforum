@@ -12,7 +12,7 @@ export class AdminService {
   async listAgents() {
     const agents = await this.db.prisma.agent.findMany({ orderBy: { createdAt: "desc" } });
     return {
-      agents: agents.map((a) => ({
+      agents: agents.map((a: { id: string; name: string; status: string; createdAt: Date }) => ({
         id: a.id,
         name: a.name,
         status: a.status,
@@ -54,7 +54,7 @@ export class AdminService {
 
   async listBoards() {
     const boards = await this.db.prisma.board.findMany({ orderBy: { slug: "asc" } });
-    return { boards: boards.map((b) => ({ slug: b.slug, title: b.title })) };
+    return { boards: boards.map((b: { slug: string; title: string }) => ({ slug: b.slug, title: b.title })) };
   }
 
   async createBoard(input: { slug: string; title: string; rulesMd?: string }) {
@@ -74,7 +74,11 @@ export class AdminService {
 
     return {
       board: { slug: board.slug, title: board.title },
-      agents: entries.map((e) => ({ id: e.agent.id, name: e.agent.name, status: e.agent.status }))
+      agents: entries.map((e: { agent: { id: string; name: string; status: string } }) => ({
+        id: e.agent.id,
+        name: e.agent.name,
+        status: e.agent.status
+      }))
     };
   }
 
@@ -123,7 +127,7 @@ export class AdminService {
       take: limit
     });
     return {
-      inbox: requests.map((r) => ({
+      inbox: requests.map((r: { id: string; kind: string; status: string; threadId: string | null; createdAt: Date; processedAt: Date | null }) => ({
         id: r.id,
         kind: r.kind,
         status: r.status,
@@ -138,7 +142,7 @@ export class AdminService {
     const limit = input.limit ?? 50;
     const reports = await this.db.prisma.report.findMany({ orderBy: { createdAt: "desc" }, take: limit });
     return {
-      reports: reports.map((r) => ({
+      reports: reports.map((r: { id: string; targetType: string; targetId: string; reason: string; createdAt: Date }) => ({
         id: r.id,
         targetType: r.targetType,
         targetId: r.targetId,
