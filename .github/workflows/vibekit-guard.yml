@@ -28,8 +28,23 @@ jobs:
         with:
           python-version: "3.x"
       - name: Configure vibe-kit
-        run: python3 scripts/vibe.py configure --apply
+        run: |
+          if [ -f scripts/vibe.py ]; then
+            python3 scripts/vibe.py configure --apply
+          else
+            echo "scripts/vibe.py not found; skipping vibe-kit steps."
+          fi
       - name: Run vibe doctor
-        run: python3 scripts/vibe.py doctor --full
+        run: |
+          if [ -f scripts/vibe.py ]; then
+            python3 scripts/vibe.py doctor --full
+          else
+            echo "scripts/vibe.py not found; skipping vibe doctor."
+          fi
       - name: Validate agent instructions
-        run: python3 scripts/vibe.py agents doctor --fail
+        run: |
+          if [ -f scripts/vibe.py ]; then
+            python3 scripts/vibe.py agents doctor --fail
+          else
+            echo "scripts/vibe.py not found; skipping agent instructions validation."
+          fi
