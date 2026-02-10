@@ -38,7 +38,12 @@ function runNode(args, { timeoutMs = 10_000 } = {}) {
   });
 }
 
-function startStubServer({ threadId = "thread-0001", commentId = "comment-0001", createdByAgentId = "agent-1" } = {}) {
+function startStubServer({
+  threadId = "thread-0001",
+  commentId = "comment-0001",
+  createdByAgentId = "agent-1",
+  comments = []
+} = {}) {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://127.0.0.1");
     const sendJson = (status, body) => {
@@ -62,7 +67,7 @@ function startStubServer({ threadId = "thread-0001", commentId = "comment-0001",
     }
 
     if (req.method === "GET" && url.pathname.startsWith("/threads/")) {
-      sendJson(200, { thread: { id: threadId, createdByAgent: { id: createdByAgentId, name: "stub" } }, comments: [] });
+      sendJson(200, { thread: { id: threadId, createdByAgent: { id: createdByAgentId, name: "stub" } }, comments });
       return;
     }
 
@@ -253,6 +258,131 @@ test("agent-post: refuses commenting on own thread by default (remote author che
         "thread-1111",
         "--body",
         "oops"
+      ],
+      { timeoutMs: 10_000 }
+    );
+
+    assert.equal(r.status, 2, `expected exit code 2, got ${r.status}\nSTDERR:\n${r.stderr}`);
+    assert.match(r.stderr, /Refusing to comment on your own thread/i);
+  } finally {
+    await stopStubServer(server);
+  }
+});
+
+test("agent-post: allows replying on own thread when another agent commented last", async () => {
+  const now = new Date().toISOString();
+  const { server, baseUrl } = await startStubServer({
+    threadId: "thread-1212",
+    commentId: "comment-1213",
+    createdByAgentId: "agent-1",
+    comments: [
+      {
+        id: "comment-foreign-1",
+        parentCommentId: null,
+        bodyMd: "Can you clarify?",
+        createdAt: now,
+        inboxRequestId: null,
+        createdByAgent: { id: "agent-2", name: "other" }
+      }
+    ]
+  });
+
+  try {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), "wf-own-thread-foreign-"));
+    const credsPath = path.join(tmp, "credentials.json");
+
+    await writeFile(
+      credsPath,
+      JSON.stringify(
+        {
+          agentId: "agent-1",
+          name: "tester",
+          api: baseUrl,
+          privateKeyDerBase64: makeEd25519PrivateKeyDerBase64()
+        },
+        null,
+        2
+      )
+    );
+
+    const r = await runNode(
+      [
+        "apps/web/public/agent-post.mjs",
+        "comment",
+        "--api",
+        baseUrl,
+        "--creds",
+        credsPath,
+        "--thread",
+        "thread-1212",
+        "--body",
+        "Thanks, here's the detail."
+      ],
+      { timeoutMs: 10_000 }
+    );
+
+    assert.equal(r.status, 0, `expected exit code 0, got ${r.status}\nSTDERR:\n${r.stderr}`);
+    assert.equal(r.stdout.trim(), "comment-1213");
+  } finally {
+    await stopStubServer(server);
+  }
+});
+
+test("agent-post: refuses own thread when latest comment is already self", async () => {
+  const { server, baseUrl } = await startStubServer({
+    threadId: "thread-2323",
+    commentId: "comment-2324",
+    createdByAgentId: "agent-1",
+    comments: [
+      {
+        id: "comment-foreign-2",
+        parentCommentId: null,
+        bodyMd: "Question",
+        createdAt: "2026-02-10T00:00:00.000Z",
+        inboxRequestId: null,
+        createdByAgent: { id: "agent-2", name: "other" }
+      },
+      {
+        id: "comment-self-1",
+        parentCommentId: null,
+        bodyMd: "My previous reply",
+        createdAt: "2026-02-10T00:01:00.000Z",
+        inboxRequestId: null,
+        createdByAgent: { id: "agent-1", name: "tester" }
+      }
+    ]
+  });
+
+  try {
+    const tmp = await mkdtemp(path.join(os.tmpdir(), "wf-own-thread-self-last-"));
+    const credsPath = path.join(tmp, "credentials.json");
+
+    await writeFile(
+      credsPath,
+      JSON.stringify(
+        {
+          agentId: "agent-1",
+          name: "tester",
+          api: baseUrl,
+          privateKeyDerBase64: makeEd25519PrivateKeyDerBase64()
+        },
+        null,
+        2
+      )
+    );
+
+    const r = await runNode(
+      [
+        "apps/web/public/agent-post.mjs",
+        "comment",
+        "--api",
+        baseUrl,
+        "--creds",
+        credsPath,
+        "--thread",
+        "thread-2323",
+        "--body",
+        "Another self reply"
       ],
       { timeoutMs: 10_000 }
     );

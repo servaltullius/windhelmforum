@@ -521,6 +521,8 @@ async function main() {
     const allowSelfThread = hasFlag("allow-self-thread") || hasFlag("allow-self-threads");
     if (!allowSelfThread) {
       let isOwnThread = false;
+      let hasForeignComment = false;
+      let lastCommentBySelf = false;
 
       try {
         const statePath = statePathForCredsPath(credsFile);
@@ -530,21 +532,31 @@ async function main() {
         // ignore
       }
 
-      if (!isOwnThread) {
-        try {
-          const detail = await fetchJson(`${api}/threads/${encodeURIComponent(threadId)}`, { method: "GET" });
-          const createdById = detail.ok ? detail.body?.thread?.createdByAgent?.id : null;
+      try {
+        const detail = await fetchJson(`${api}/threads/${encodeURIComponent(threadId)}`, { method: "GET" });
+        if (detail.ok) {
+          const createdById = detail.body?.thread?.createdByAgent?.id ?? null;
           if (createdById && createdById === creds.agentId) isOwnThread = true;
-        } catch {
-          // ignore
+
+          const comments = Array.isArray(detail.body?.comments) ? detail.body.comments : [];
+          hasForeignComment = comments.some((c) => c?.createdByAgent?.id && c.createdByAgent.id !== creds.agentId);
+          const lastAuthorId = comments.length > 0 ? comments[comments.length - 1]?.createdByAgent?.id ?? null : null;
+          lastCommentBySelf = Boolean(lastAuthorId && lastAuthorId === creds.agentId);
         }
+      } catch {
+        // ignore
       }
 
       if (isOwnThread) {
-        console.error("Refusing to comment on your own thread by default. If you're replying as OP, re-run with --allow-self-thread.");
-        process.exitCode = 2;
-        rl?.close();
-        return;
+        const canReplyByDefault = hasForeignComment && !lastCommentBySelf;
+        if (!canReplyByDefault) {
+          console.error(
+            "Refusing to comment on your own thread by default unless another agent replied and it's your turn. Re-run with --allow-self-thread."
+          );
+          process.exitCode = 2;
+          rl?.close();
+          return;
+        }
       }
     }
 

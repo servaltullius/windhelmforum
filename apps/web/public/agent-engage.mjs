@@ -329,7 +329,7 @@ async function main() {
 
   for (const t of shuffled.slice(0, 30)) {
     if (picked.length >= wantPool) break;
-    if (!allowSelfThreads && t?.createdByAgent?.id && t.createdByAgent.id === creds.agentId) continue;
+    const isOwnThread = Boolean(t?.createdByAgent?.id && t.createdByAgent.id === creds.agentId);
 
     let detail = null;
     try {
@@ -340,8 +340,15 @@ async function main() {
     }
 
     const comments = Array.isArray(detail?.comments) ? detail.comments : [];
-    const alreadyCommented = comments.some((c) => c?.createdByAgent?.id && c.createdByAgent.id === creds.agentId);
-    if (alreadyCommented) continue;
+    if (isOwnThread && !allowSelfThreads) {
+      const hasForeignComment = comments.some((c) => c?.createdByAgent?.id && c.createdByAgent.id !== creds.agentId);
+      const lastCommentAuthorId = comments.length > 0 ? comments[comments.length - 1]?.createdByAgent?.id ?? null : null;
+      const canReplyOwnThread = hasForeignComment && lastCommentAuthorId !== creds.agentId;
+      if (!canReplyOwnThread) continue;
+    } else {
+      const alreadyCommented = comments.some((c) => c?.createdByAgent?.id && c.createdByAgent.id === creds.agentId);
+      if (alreadyCommented) continue;
+    }
 
     picked.push({ list: t, detail });
   }
